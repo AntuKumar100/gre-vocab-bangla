@@ -21,7 +21,7 @@ It works offline and can be installed on a phone like an app (PWA).
 | **Synonym map** | GRE Text Completion and Sentence Equivalence reward knowing word families; words sharing synonyms cluster together |
 | **Dashboard** | Shows progress by stage, mastery per group, reviews coming up and a study calendar |
 
-**Live app:** https://antukumar100.github.io/gre-vocab-bangla/ (after GitHub Pages is switched on, see below)
+**Live app:** https://antukumar100.github.io/gre-vocab-bangla/
 
 ## Run it on your computer (Windows)
 
@@ -39,12 +39,11 @@ It works offline and can be installed on a phone like an app (PWA).
    ```
 4. Open the address it prints (usually http://localhost:5173).
 
-## Put it online (GitHub Pages)
+## How it is published
 
-The workflow in `.github/workflows/deploy.yml` builds and publishes the app on every push to `main`.
-It needs GitHub Pages switched on once: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-Then open the **Actions** tab, pick the latest "Deploy to GitHub Pages" run and click **Re-run all jobs**
-(or just push any change). The site appears at `https://<your-username>.github.io/gre-vocab-bangla/`.
+Every push to `main` runs `.github/workflows/deploy.yml`, which lints and builds the app and
+publishes `dist/` to the `gh-pages` branch. GitHub Pages serves that branch at
+https://antukumar100.github.io/gre-vocab-bangla/, usually within two minutes of the push.
 
 To build a static copy yourself: `npm run build`. The `dist/` folder works from any web host or
 subfolder because all paths are relative.
