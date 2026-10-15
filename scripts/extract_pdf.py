@@ -17,7 +17,9 @@ OUT = Path(__file__).resolve().parent.parent / "content" / "source.json"
 
 
 def clean(s):
-    return re.sub(r"\s+", " ", (s or "").replace("\n", " ")).strip()
+    s = re.sub(r"\s+", " ", (s or "").replace("\n", " ").replace("*", ""))
+    # Line breaks inside hyphenated words come out as "self- denial".
+    return re.sub(r"(\w)- (\w)", r"\1-\2", s).strip()
 
 
 def sentence_case(s):
