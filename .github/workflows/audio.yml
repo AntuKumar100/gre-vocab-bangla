@@ -5,7 +5,7 @@ name: Generate audio
 on:
   push:
     branches: [main]
-    paths: ['content/groups/**', 'scripts/gen_audio.py']
+    paths: ['content/groups/**', 'scripts/gen_audio.py', '.github/workflows/audio.yml']
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - run: pip install kokoro-onnx==0.6.1 espeakng-loader==0.2.4 soundfile
       - uses: actions/cache@v4
         id: models

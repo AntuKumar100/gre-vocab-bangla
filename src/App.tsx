@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { GameLayer } from "./components/GameLayer";
 import { Icon, type IconName } from "./components/Icon";
+import { LogoMark, Wordmark } from "./components/Logo";
 import { Modal } from "./components/Modal";
 import { WordDetail } from "./components/WordDetail";
 import { stopStory } from "./lib/audio";
 import { Ctx, type AppCtx } from "./lib/context";
 import { useWords } from "./lib/data";
 import { go, useRoute } from "./lib/router";
-import { dueIds, useProgress } from "./lib/store";
+import { dueIds, levelOf, streak, useProgress } from "./lib/store";
 import { Dashboard } from "./views/Dashboard";
 import { GroupView } from "./views/GroupView";
 import { Groups } from "./views/Groups";
@@ -21,7 +23,7 @@ const NAV: { path: string; label: string; icon: IconName; match: string[] }[] = 
   { path: "/", label: "Home", icon: "home", match: [""] },
   { path: "/groups", label: "Groups", icon: "layers", match: ["groups", "group", "learn"] },
   { path: "/review", label: "Review", icon: "repeat", match: ["review"] },
-  { path: "/quiz", label: "Quiz", icon: "quiz", match: ["quiz"] },
+  { path: "/quiz", label: "Practice", icon: "target", match: ["quiz"] },
   { path: "/map/1", label: "Map", icon: "network", match: ["map"] },
   { path: "/words", label: "Words", icon: "search", match: ["words"] },
 ];
@@ -58,7 +60,15 @@ export default function App() {
   const due = useMemo(() => dueIds().length, [progress.cards, routeKey]);
 
   if (error) return <div className="page center-page"><p>{error}</p></div>;
-  if (!ctx) return <div className="page center-page"><div className="spinner" aria-label="Loading words" /></div>;
+  if (!ctx)
+    return (
+      <div className="page center-page">
+        <div className="boot">
+          <LogoMark size={72} />
+          <div className="spinner" aria-label="Loading words" />
+        </div>
+      </div>
+    );
 
   const [head, arg, arg2] = route;
   let view;
@@ -95,15 +105,15 @@ export default function App() {
   }
   const inSession = head === "learn" || head === "review";
   const openW = openId ? ctx.index.byId.get(openId) : undefined;
+  const lvl = levelOf(progress.xp);
+  const days = streak(progress.days);
 
   return (
     <Ctx.Provider value={ctx}>
       <header className="topbar">
-        <button className="brand" onClick={() => go("/")}>
-          <span className="logo" aria-hidden>
-            শ
-          </span>
-          <span>GRE Vocab</span>
+        <button className="brand" onClick={() => go("/")} aria-label="Shobdo Quest home">
+          <LogoMark size={38} />
+          <Wordmark />
         </button>
         <nav className="topnav" aria-label="Main">
           {NAV.map((n) => (
@@ -114,11 +124,28 @@ export default function App() {
             </a>
           ))}
         </nav>
+        <div className="hud">
+          <span className={`hud-chip streak${days > 0 ? " lit" : ""}`} title={`${days}-day streak`}>
+            <Icon name="flame" size={18} />
+            {days}
+          </span>
+          <span className="hud-chip xp" id="xp-chip" title={`Level ${lvl.level} · ${lvl.title} · ${progress.xp} XP`}>
+            <Icon name="bolt" size={18} />
+            <span className="hud-lvl">Lv {lvl.level}</span>
+            <span className="hud-bar" aria-hidden>
+              <span style={{ width: `${(lvl.into / lvl.step) * 100}%` }} />
+            </span>
+          </span>
+        </div>
         <a href="#/settings" className={`icon-btn${head === "settings" ? " on" : ""}`} aria-label="Settings">
           <Icon name="settings" />
         </a>
       </header>
-      <main className={inSession ? "session" : ""}>{view}</main>
+      <main className={inSession ? "session" : ""}>
+        <div className="route-anim" key={`${head}/${arg}`}>
+          {view}
+        </div>
+      </main>
       <nav className="bottomnav" aria-label="Main">
         {NAV.map((n) => (
           <a key={n.path} href={`#${n.path}`} className={n.match.includes(head ?? "") ? "on" : ""}>
@@ -128,6 +155,7 @@ export default function App() {
           </a>
         ))}
       </nav>
+      <GameLayer />
       {openW && (
         <Modal onClose={() => setOpenId(null)} label={openW.word}>
           <WordDetail w={openW} key={openW.id} />

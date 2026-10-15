@@ -64,6 +64,23 @@ export function Settings() {
           <input type="checkbox" checked={settings.autoplay} onChange={(e) => updateSettings({ autoplay: e.target.checked })} />
           <span>Play the story automatically when a card opens</span>
         </label>
+        <label className="field row check">
+          <input type="checkbox" checked={settings.sounds} onChange={(e) => updateSettings({ sounds: e.target.checked })} />
+          <span>Sound effects for right and wrong answers</span>
+        </label>
+        <label className="field row check">
+          <input type="checkbox" checked={settings.effects} onChange={(e) => updateSettings({ effects: e.target.checked })} />
+          <span>Confetti and celebrations</span>
+        </label>
+        <label className="field row">
+          <span>Daily XP goal</span>
+          <select value={settings.xpGoal} onChange={(e) => updateSettings({ xpGoal: Number(e.target.value) })}>
+            <option value={50}>50 XP · casual</option>
+            <option value={150}>150 XP · steady</option>
+            <option value={300}>300 XP · serious</option>
+            <option value={500}>500 XP · test is soon</option>
+          </select>
+        </label>
         <label className="field row">
           <span>Story speed: {settings.audioRate.toFixed(2)}×</span>
           <input

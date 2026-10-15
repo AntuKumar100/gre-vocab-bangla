@@ -3,6 +3,7 @@ import { Icon } from "../components/Icon";
 import { Meanings, WordBody, WordHeader } from "../components/WordDetail";
 import { playStory, speak, stopStory, toggleStory } from "../lib/audio";
 import { useApp } from "../lib/context";
+import { celebrate, sfx } from "../lib/fx";
 import { go } from "../lib/router";
 import { dueIds, getProgress, grade, previewIntervals, Rating, useProgress, type Grade } from "../lib/store";
 
@@ -28,6 +29,7 @@ export function Review() {
   }, [w, settings.reverse]);
 
   const reveal = () => {
+    sfx("flip");
     setRevealed(true);
     if (w && settings.autoplay && w.audio) playStory(w);
   };
@@ -35,6 +37,7 @@ export function Review() {
   const answer = (r: Grade) => {
     if (!w) return;
     stopStory();
+    sfx(r >= Rating.Good ? "correct" : "tap");
     grade(w.id, r);
     setDone((d) => d + 1);
     setRevealed(false);
@@ -58,12 +61,21 @@ export function Review() {
     return () => removeEventListener("keydown", onKey);
   });
 
+  useEffect(() => {
+    if (!w && done > 0) {
+      sfx("finish");
+      celebrate();
+    }
+  }, [w, done]);
+
   if (!w) {
     const learning = Object.values(getProgress().cards).filter((c) => c.due.getTime() - Date.now() < 30 * 60000).length;
     return (
       <div className="page center-page">
-        <div className="done-card">
-          <Icon name="check" size={40} />
+        <div className="done-card pop-in">
+          <div className="done-icon">
+            <Icon name={done ? "trophy" : "check"} size={44} />
+          </div>
           <h1>{done ? `Done: ${done} reviews` : "Nothing due right now"}</h1>
           <p className="muted">
             {learning
@@ -98,7 +110,7 @@ export function Review() {
         <span className="muted small">{queue.length} left</span>
       </div>
 
-      <article className="flashcard">
+      <article className={`flashcard ${revealed ? "flip-in" : "card-in"}`} key={`${w.id}-${revealed}`}>
         {settings.reverse ? (
           <div className="front reverse">
             <span className="muted small">Which word means…</span>

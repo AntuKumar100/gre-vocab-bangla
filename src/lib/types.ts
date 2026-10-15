@@ -10,6 +10,15 @@ export interface Word {
   synonyms: string[];
   example: string;
   audio: boolean;
+  /** GRE sentence item: blank sentence, synonym pair, tempting wrong answer, clue phrase. */
+  gre?: GreItem;
+}
+
+export interface GreItem {
+  s: string;
+  pair: string;
+  trap: string;
+  clue: string;
 }
 
 /** Where a word is in the learning pipeline, derived from its FSRS card. */

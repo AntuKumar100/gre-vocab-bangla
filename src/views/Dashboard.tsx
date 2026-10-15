@@ -7,7 +7,7 @@ import { Icon } from "../components/Icon";
 import { StoryPlayer } from "../components/Story";
 import { useApp } from "../lib/context";
 import { go } from "../lib/router";
-import { stageOf, streak, today, useProgress } from "../lib/store";
+import { levelOf, stageOf, streak, today, useProgress } from "../lib/store";
 import { STAGES, type Stage } from "../lib/types";
 
 export function Dashboard() {
@@ -50,40 +50,78 @@ export function Dashboard() {
 
   const todayLog = days[today()];
   const learned = index.words.length - stageCounts.new;
+  const lvl = levelOf(progress.xp);
+  const xpToday = todayLog?.xp ?? 0;
+  const goal = progress.settings.xpGoal;
+  const streakDays = streak(days);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="page dashboard">
-      <section className="hero-row">
-        <div className="hero-card primary">
-          <span className="hero-label">Due for review</span>
-          <span className="hero-number">{due}</span>
-          <button className="btn primary" disabled={due === 0} onClick={() => go("/review")}>
-            <Icon name="repeat" /> {due ? "Start review" : "All caught up"}
+      <section className="hero-banner">
+        <div className="hb-text">
+          <span className="hb-greet">
+            {greeting} <span lang="bn">· চলো শিখি!</span>
+          </span>
+          <h1>
+            Level {lvl.level} <span className="hb-title">{lvl.title}</span>
+          </h1>
+          <div className="hb-xp" aria-label={`${lvl.into} of ${lvl.step} XP to the next level`}>
+            <div className="hb-xp-fill" style={{ width: `${(lvl.into / lvl.step) * 100}%` }} />
+          </div>
+          <span className="hb-sub">
+            {lvl.step - lvl.into} XP to level {lvl.level + 1} · {progress.xp} XP total
+          </span>
+        </div>
+        <div className="hb-rings">
+          <GoalRing value={xpToday} goal={goal} />
+          <div className={`flame-badge${streakDays > 0 ? " lit" : ""}`}>
+            <Icon name="flame" size={40} />
+            <strong>{streakDays}</strong>
+            <span>day streak</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="action-tiles">
+        <button className="action-tile t-review" disabled={due === 0} onClick={() => go("/review")}>
+          <Icon name="repeat" size={30} />
+          <strong>{due ? `Review ${due}` : "All caught up"}</strong>
+          <span>{due ? "words are due. Keep them fresh." : "No reviews due right now."}</span>
+        </button>
+        {nextGroup !== undefined && (
+          <button className="action-tile t-learn" onClick={() => go(`/learn/${nextGroup}`)}>
+            <Icon name="book" size={30} />
+            <strong>Learn group {nextGroup}</strong>
+            <span>
+              {todayLog?.learned ?? 0} of {progress.settings.newPerDay} new words today
+            </span>
           </button>
+        )}
+        <button className="action-tile t-gre" onClick={() => go(learned ? "/quiz/learned" : "/quiz/group/1")}>
+          <Icon name="target" size={30} />
+          <strong>GRE practice</strong>
+          <span>Sentence Equivalence and Text Completion</span>
+        </button>
+      </section>
+
+      <section className="stat-tiles">
+        <div className="stat">
+          <span className="stat-num">{learned}</span>
+          <span className="stat-label">of {index.words.length} words started</span>
         </div>
-        <div className="hero-card">
-          <span className="hero-label">Learn new words</span>
-          <span className="hero-number">{todayLog?.learned ?? 0}</span>
-          <span className="muted small">learned today · goal {progress.settings.newPerDay}</span>
-          {nextGroup !== undefined && (
-            <button className="btn" onClick={() => go(`/learn/${nextGroup}`)}>
-              <Icon name="book" /> Continue group {nextGroup}
-            </button>
-          )}
+        <div className="stat">
+          <span className="stat-num">{stageCounts.mastered}</span>
+          <span className="stat-label">mastered</span>
         </div>
-        <div className="stat-tiles">
-          <div className="stat">
-            <span className="stat-num">{learned}</span>
-            <span className="stat-label">words started of {index.words.length}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num">{stageCounts.mastered}</span>
-            <span className="stat-label">mastered</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num">{streak(days)}</span>
-            <span className="stat-label">day streak</span>
-          </div>
+        <div className="stat">
+          <span className="stat-num">{progress.bestCombo}</span>
+          <span className="stat-label">best combo</span>
+        </div>
+        <div className="stat">
+          <span className="stat-num">{todayLog ? Math.round((100 * (todayLog.correct + todayLog.quizCorrect)) / Math.max(1, todayLog.reviews + todayLog.quiz)) : 0}%</span>
+          <span className="stat-label">accuracy today</span>
         </div>
       </section>
 
@@ -98,11 +136,13 @@ export function Dashboard() {
           <p className="muted small">Tap a group to open it. Darker means more of it is mastered.</p>
           <GroupGrid stats={groupStats} onPick={(g) => go(`/group/${g}`)} />
         </section>
-        <section className="panel">
-          <h2>Word of the day</h2>
+        <section className="panel wotd-panel">
+          <h2>
+            <Icon name="sparkle" size={18} /> Word of the day
+          </h2>
           <button className="wotd" onClick={() => openWord(wordOfDay.id)}>
             <span className="headword">{wordOfDay.word}</span>
-            <span className="muted">{wordOfDay.en}</span>
+            <span className="wotd-en">{wordOfDay.en}</span>
             <span className="bn" lang="bn">
               {wordOfDay.bn}
             </span>
@@ -122,6 +162,31 @@ export function Dashboard() {
           <p className="muted small">Reviews and quiz answers per day</p>
           <ActivityCalendar days={days} />
         </section>
+      </div>
+    </div>
+  );
+}
+
+/** Today's XP against the daily goal, as a ring that fills up. */
+function GoalRing({ value, goal }: { value: number; goal: number }) {
+  const r = 42;
+  const c = 2 * Math.PI * r;
+  const f = Math.min(1, value / goal);
+  return (
+    <div className={`goal-ring${f >= 1 ? " done" : ""}`} role="img" aria-label={`Daily goal: ${value} of ${goal} XP`}>
+      <svg viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#fde047" />
+            <stop offset="1" stopColor="#fb923c" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r={r} className="ring-bg" />
+        <circle cx="50" cy="50" r={r} className="ring-fg" strokeDasharray={c} strokeDashoffset={c * (1 - f)} />
+      </svg>
+      <div className="ring-label">
+        {f >= 1 ? <Icon name="check" size={26} /> : <strong>{value}</strong>}
+        <span>{f >= 1 ? "goal met" : `/ ${goal} XP`}</span>
       </div>
     </div>
   );

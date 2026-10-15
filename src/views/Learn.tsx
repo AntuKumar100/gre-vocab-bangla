@@ -3,6 +3,7 @@ import { Icon } from "../components/Icon";
 import { WordDetail } from "../components/WordDetail";
 import { playStory, stopStory, toggleStory } from "../lib/audio";
 import { useApp } from "../lib/context";
+import { celebrate, sfx } from "../lib/fx";
 import { go } from "../lib/router";
 import { getProgress, grade, Rating, useProgress, type Grade } from "../lib/store";
 
@@ -33,6 +34,7 @@ export function Learn({ group }: { group: number }) {
   const answer = (r: Grade) => {
     if (!w) return;
     if (!session.browsing) {
+      sfx(r >= Rating.Good ? "correct" : "tap");
       grade(w.id, r);
       setResults((x) => ({ ...x, [w.id]: r }));
     }
@@ -55,13 +57,23 @@ export function Learn({ group }: { group: number }) {
     return () => removeEventListener("keydown", onKey);
   });
 
+  const finished = !w;
+  useEffect(() => {
+    if (finished && !session.browsing) {
+      sfx("finish");
+      celebrate();
+    }
+  }, [finished, session.browsing]);
+
   if (!w) {
     const ids = session.list.map((x) => x.id);
     const again = Object.values(results).filter((r) => r === Rating.Again).length;
     return (
       <div className="page center-page">
-        <div className="done-card">
-          <Icon name="check" size={40} />
+        <div className="done-card pop-in">
+          <div className="done-icon">
+            <Icon name="trophy" size={44} />
+          </div>
           <h1>{session.browsing ? "Group reviewed" : `Group ${group}: ${session.list.length} words learned`}</h1>
           {!session.browsing && (
             <p className="muted">
@@ -97,7 +109,9 @@ export function Learn({ group }: { group: number }) {
           {i + 1}/{session.list.length}
         </span>
       </div>
-      <WordDetail w={w} key={w.id} />
+      <div className="card-in" key={w.id}>
+        <WordDetail w={w} />
+      </div>
       <div className="answer-bar">
         {session.browsing ? (
           <>
