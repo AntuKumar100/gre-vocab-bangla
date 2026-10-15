@@ -31,6 +31,7 @@ for (const file of readdirSync(groupsDir).filter((f) => f.endsWith(".json")).sor
       story: w.story,
       synonyms: pdf.synonyms,
       example: pdf.example,
+      ...(w.gre && { gre: w.gre }),
       audio: existsSync(join(root, "public/audio", `${id}.mp3`)),
     });
   });

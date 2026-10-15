@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Commits made by the audio workflow don't trigger push events, so redeploy after it.
+  workflow_run:
+    workflows: [Generate audio]
+    types: [completed]
 
 permissions:
   contents: write
@@ -18,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 20

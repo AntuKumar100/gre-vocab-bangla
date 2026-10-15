@@ -1,0 +1,90 @@
+name: Generate audio
+
+# Narrates every story whose text changed, split across parallel runners,
+# then commits the MP3s and manifest back to main (which redeploys the site).
+on:
+  push:
+    branches: [main]
+    paths: ['content/groups/**', 'scripts/gen_audio.py']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audio
+  cancel-in-progress: true
+
+env:
+  SHARDS: 20
+
+jobs:
+  narrate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install kokoro-onnx==0.6.1 espeakng-loader==0.2.4 soundfile
+      - uses: actions/cache@v4
+        id: models
+        with:
+          path: models
+          key: kokoro-v1.0
+      - if: steps.models.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p models
+          base=https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0
+          curl -sSfL -o models/kokoro-v1.0.onnx $base/kokoro-v1.0.onnx
+          curl -sSfL -o models/voices-v1.0.bin $base/voices-v1.0.bin
+      - run: python scripts/gen_audio.py models --shard ${{ matrix.shard }}/$SHARDS --done-file done-${{ matrix.shard }}.json
+      - name: Collect new files
+        run: |
+          mkdir -p out
+          python -c "import json,shutil,sys; [shutil.copy(f'public/audio/{e}.mp3','out/') for e in json.load(open(sys.argv[1]))]" done-${{ matrix.shard }}.json
+          mv done-${{ matrix.shard }}.json out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audio-${{ matrix.shard }}
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  commit:
+    needs: narrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: shards
+          pattern: audio-*
+      - name: Merge shards
+        run: |
+          python - <<'PY'
+          import json, shutil
+          from pathlib import Path
+          manifest_path = Path("content/audio-manifest.json")
+          manifest = json.loads(manifest_path.read_text())
+          copied = 0
+          for done_file in Path("shards").glob("*/done-*.json"):
+              for eid, key in json.loads(done_file.read_text()).items():
+                  shutil.copy(done_file.parent / f"{eid}.mp3", Path("public/audio") / f"{eid}.mp3")
+                  manifest[eid] = key
+                  copied += 1
+          manifest_path.write_text(json.dumps(dict(sorted(manifest.items())), indent=1) + "\n")
+          print(f"{copied} files merged")
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898+github-actions[bot]@users.noreply.github.com"
+          git add public/audio content/audio-manifest.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Regenerate story narration audio"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && exit 0; sleep 5; done
+          exit 1

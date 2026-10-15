@@ -9,7 +9,9 @@ Setup (once):
   download kokoro-v1.0.onnx and voices-v1.0.bin from
   https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0
 
-Usage: python scripts/gen_audio.py <model-dir> [--voice af_heart] [--shard i/n] [--rewritten-only]
+Usage: python scripts/gen_audio.py <model-dir> [--voice af_heart] [--shard i/n] [--rewritten-only] [--done-file f]
+
+In CI, .github/workflows/audio.yml runs this across parallel shards.
 """
 import argparse
 import hashlib
@@ -70,6 +72,7 @@ def main():
     ap.add_argument("--clause-pause", type=float, default=0.15)
     ap.add_argument("--rewritten-only", action="store_true", help="skip entries without GRE items yet")
     ap.add_argument("--shard", default="0/1")
+    ap.add_argument("--done-file", help="write only this run's manifest entries here instead of updating the manifest")
     args = ap.parse_args()
     shard, nshards = map(int, args.shard.split("/"))
 
@@ -110,6 +113,9 @@ def main():
         if i % 20 == 0 or i == len(todo):
             print(f"{i}/{len(todo)} {e['word']}", flush=True)
 
+    if args.done_file:
+        Path(args.done_file).write_text(json.dumps(done, indent=1) + "\n")
+        return
     # Re-read so parallel shards don't clobber each other's entries.
     manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
     manifest.update(done)
