@@ -1,6 +1,6 @@
 """Generate story narration MP3s with the Kokoro open-source TTS model.
 
-Reads content/groups/*.json and writes public/audio/<slug>.mp3 for every entry
+Reads content/groups/*.json and writes public/audio/<id>.mp3 for every entry
 whose audio is missing or whose story text changed (tracked in
 content/audio-manifest.json).
 
@@ -28,8 +28,9 @@ AUDIO = ROOT / "public" / "audio"
 MANIFEST = ROOT / "content" / "audio-manifest.json"
 
 
-def slug(word):
-    return re.sub(r"[^a-z0-9]+", "-", word.lower()).strip("-")
+def entry_id(group, word):
+    # Group-prefixed so a word listed in two groups gets two files.
+    return f"{group:02d}-" + re.sub(r"[^a-z0-9]+", "-", word.lower()).strip("-")
 
 
 def narration(entry):
@@ -47,20 +48,21 @@ def main():
 
     AUDIO.mkdir(parents=True, exist_ok=True)
     manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
-    entries = [e for f in sorted(GROUPS.glob("*.json")) for e in json.loads(f.read_text(encoding="utf-8"))]
     todo = []
-    for e in entries:
-        text = narration(e)
-        key = hashlib.sha1(f"{args.voice}|{args.speed}|{text}".encode()).hexdigest()[:12]
-        out = AUDIO / f"{slug(e['word'])}.mp3"
-        if manifest.get(slug(e["word"])) != key or not out.exists():
-            todo.append((e, text, key, out))
+    for f in sorted(GROUPS.glob("*.json")):
+        for e in json.loads(f.read_text(encoding="utf-8")):
+            eid = entry_id(int(f.stem), e["word"])
+            text = narration(e)
+            key = hashlib.sha1(f"{args.voice}|{args.speed}|{text}".encode()).hexdigest()[:12]
+            out = AUDIO / f"{eid}.mp3"
+            if manifest.get(eid) != key or not out.exists():
+                todo.append((eid, e, text, key, out))
     todo = [t for i, t in enumerate(todo) if i % nshards == shard]
     print(f"{len(todo)} files to generate")
 
     kokoro = Kokoro(f"{args.model_dir}/kokoro-v1.0.onnx", f"{args.model_dir}/voices-v1.0.bin")
     done = {}
-    for i, (e, text, key, out) in enumerate(todo, 1):
+    for i, (eid, e, text, key, out) in enumerate(todo, 1):
         samples, sr = kokoro.create(text, voice=args.voice, speed=args.speed, lang="en-us")
         wav = io.BytesIO()
         sf.write(wav, samples, sr, format="WAV")
@@ -68,7 +70,7 @@ def main():
             ["ffmpeg", "-loglevel", "error", "-y", "-i", "-", "-ac", "1", "-codec:a", "libmp3lame", "-b:a", "40k", str(out)],
             input=wav.getvalue(), check=True,
         )
-        done[slug(e["word"])] = key
+        done[eid] = key
         if i % 20 == 0 or i == len(todo):
             print(f"{i}/{len(todo)} {e['word']}", flush=True)
 
