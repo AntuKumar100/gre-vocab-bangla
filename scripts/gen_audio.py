@@ -9,7 +9,7 @@ Setup (once):
   download kokoro-v1.0.onnx and voices-v1.0.bin from
   https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0
 
-Usage: python scripts/gen_audio.py <model-dir> [--voice af_heart] [--shard i/n]
+Usage: python scripts/gen_audio.py <model-dir> [--voice af_heart] [--shard i/n] [--rewritten-only]
 """
 import argparse
 import hashlib
@@ -64,7 +64,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("model_dir")
     ap.add_argument("--voice", default="af_heart")
-    ap.add_argument("--speed", type=float, default=0.95)
+    # Slow, clear narration with real pauses between sentences.
+    ap.add_argument("--speed", type=float, default=0.82)
+    ap.add_argument("--sentence-pause", type=float, default=0.45)
+    ap.add_argument("--clause-pause", type=float, default=0.15)
+    ap.add_argument("--rewritten-only", action="store_true", help="skip entries without GRE items yet")
     ap.add_argument("--shard", default="0/1")
     args = ap.parse_args()
     shard, nshards = map(int, args.shard.split("/"))
@@ -74,10 +78,12 @@ def main():
     todo = []
     for f in sorted(GROUPS.glob("*.json")):
         for e in json.loads(f.read_text(encoding="utf-8")):
+            if args.rewritten_only and "gre" not in e:
+                continue
             eid = entry_id(int(f.stem), e["word"])
             text = narration(e)
             fix = PRONUNCIATION.get(e["word"])
-            key_src = f"{args.voice}|{args.speed}|{text}" + (f"|{fix}" if fix else "")
+            key_src = f"{args.voice}|{args.speed}|{args.sentence_pause}|{args.clause_pause}|{text}" + (f"|{fix}" if fix else "")
             key = hashlib.sha1(key_src.encode()).hexdigest()[:12]
             out = AUDIO / f"{eid}.mp3"
             if manifest.get(eid) != key or not out.exists():
@@ -86,17 +92,18 @@ def main():
     print(f"{len(todo)} files to generate")
 
     kokoro = Kokoro(f"{args.model_dir}/kokoro-v1.0.onnx", f"{args.model_dir}/voices-v1.0.bin")
+    pauses = {"sentence_pause": args.sentence_pause, "clause_pause": args.clause_pause}
     done = {}
     for i, (eid, e, text, key, out) in enumerate(todo, 1):
         ipa = phonemes_for(kokoro, e, text)
         if ipa:
-            samples, sr = kokoro.create(ipa, voice=args.voice, speed=args.speed, lang="en-us", is_phonemes=True)
+            samples, sr = kokoro.create(ipa, voice=args.voice, speed=args.speed, lang="en-us", is_phonemes=True, **pauses)
         else:
-            samples, sr = kokoro.create(text, voice=args.voice, speed=args.speed, lang="en-us")
+            samples, sr = kokoro.create(text, voice=args.voice, speed=args.speed, lang="en-us", **pauses)
         wav = io.BytesIO()
         sf.write(wav, samples, sr, format="WAV")
         subprocess.run(
-            ["ffmpeg", "-loglevel", "error", "-y", "-i", "-", "-ac", "1", "-codec:a", "libmp3lame", "-b:a", "40k", str(out)],
+            ["ffmpeg", "-loglevel", "error", "-y", "-i", "-", "-ac", "1", "-codec:a", "libmp3lame", "-b:a", "32k", str(out)],
             input=wav.getvalue(), check=True,
         )
         done[eid] = key
