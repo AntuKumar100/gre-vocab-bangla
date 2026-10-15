@@ -8242,288 +8242,330 @@
   "group": 26,
   "word": "apprehension",
   "synonyms": [
-   "anxiety or fear about the future"
+   "trepidation",
+   "foreboding",
+   "disquiet"
   ],
-  "meaning": "আশ(cid:486)া, ভয়",
+  "meaning": "Anxiety or fear about the future",
   "example": "Sarah's apprehension about her job interview was palpable."
  },
  {
   "group": 26,
   "word": "ardent",
   "synonyms": [
-   "intensely devoted or enthusiastic"
+   "fervent",
+   "zealous",
+   "passionate"
   ],
-  "meaning": "উৎসাহী, আ(cid:419)হী",
+  "meaning": "Intensely devoted or enthusiastic",
   "example": "The team's ardent fans cheered them on throughout the game."
  },
  {
   "group": 26,
   "word": "axiomatic",
   "synonyms": [
-   "self-evident",
-   "unquestionable"
+   "indisputable",
+   "undeniable",
+   "self-apparent"
   ],
-  "meaning": "(cid:752)তঃিস(cid:541), অকাট(cid:415)",
+  "meaning": "Self-evident, unquestionable",
   "example": "The laws of physics are often considered axiomatic."
  },
  {
   "group": 26,
   "word": "cease",
   "synonyms": [
-   "to come to an end",
-   "to stop"
+   "terminate",
+   "desist",
+   "discontinue"
   ],
-  "meaning": "ব(cid:564) হওয়া, থামা",
+  "meaning": "To come to an end, to stop",
   "example": "The rain will cease later this evening."
  },
  {
   "group": 26,
   "word": "conducive",
   "synonyms": [
-   "helpful",
-   "favorable to something"
+   "propitious",
+   "advantageous",
+   "beneficial"
   ],
-  "meaning": "সহায়ক, অন(cid:668)ু ল",
+  "meaning": "Helpful, favorable to something",
   "example": "The quiet library was conducive to studying."
  },
  {
   "group": 26,
   "word": "corporeal",
   "synonyms": [
-   "relating to the physical body"
+   "material",
+   "bodily",
+   "somatic"
   ],
-  "meaning": "শারীিরক, (cid:315)দিহক",
+  "meaning": "Relating to the physical body",
   "example": "Ghosts are often depicted as fading, insubstantial beings, lacking a corporeal form."
  },
  {
   "group": 26,
   "word": "doctrinaire",
   "synonyms": [
-   "rigidly adhering to beliefs",
-   "inflexible"
+   "inflexible",
+   "dogmatic",
+   "intransigent"
   ],
-  "meaning": "(cid:314)গাঁড়া, মতবাদী",
+  "meaning": "Rigidly adhering to beliefs, inflexible",
   "example": "The doctrinaire politician refused to compromise on any issue."
  },
  {
   "group": 26,
   "word": "eclectic",
   "synonyms": [
-   "choosing from a variety of sources",
-   "styles",
-   "or ideas"
+   "diverse",
+   "heterogeneous",
+   "multifaceted"
   ],
-  "meaning": "ব(cid:753)মখু ী, (cid:315)বিচ(cid:431)পূণ(cid:362)",
+  "meaning": "Choosing from a variety of sources, styles, or ideas",
   "example": "The restaurant had an eclectic menu, offering dishes from all over the world."
  },
  {
   "group": 26,
   "word": "equanimity",
   "synonyms": [
-   "calmness of mind",
-   "composure"
+   "tranquility",
+   "poise",
+   "self-possession"
   ],
-  "meaning": "ি(cid:646)রতা, শা(cid:557)ভাব",
+  "meaning": "Calmness of mind, composure",
   "example": "She handled the crisis with remarkable equanimity."
  },
  {
   "group": 26,
   "word": "exorbitant",
   "synonyms": [
-   "unreasonably high (price",
-   "amount)"
+   "excessive",
+   "extortionate",
+   "outrageous"
   ],
-  "meaning": "অত(cid:415)িধক, গলাকাটা",
+  "meaning": "Unreasonably high (price, amount)",
   "example": "The exorbitant cost of the designer handbag was beyond her budget."
  },
  {
   "group": 26,
   "word": "fickle",
   "synonyms": [
-   "changeable",
-   "especially with loyalties or affections"
+   "inconstant",
+   "capricious",
+   "volatile"
   ],
-  "meaning": "চ(cid:505)ল, পিরবত(cid:362)নশীল",
+  "meaning": "Changeable, especially with loyalties or affections",
   "example": "Fashion trends can be notoriously fickle."
  },
  {
   "group": 26,
   "word": "figurative",
   "synonyms": [
-   "metaphorical",
-   "not literal"
+   "symbolic",
+   "representational",
+   "allegorical"
   ],
-  "meaning": "(cid:730)পক, অল(cid:486)ারব(cid:753)ল",
+  "meaning": "Metaphorical, not literal",
   "example": "The poet used figurative language to paint vivid images in the reader's mind."
  },
  {
   "group": 26,
   "word": "flustered",
   "synonyms": [
-   "agitated or confused"
+   "perturbed",
+   "discombobulated",
+   "disconcerted"
   ],
-  "meaning": "িবচিলত, অি(cid:646)র",
+  "meaning": "Agitated or confused",
   "example": "The surprise question flustered the speaker, momentarily interrupting his flow."
  },
  {
   "group": 26,
   "word": "gullible",
   "synonyms": [
-   "easily deceived or tricked"
+   "credulous",
+   "naive",
+   "unsuspecting"
   ],
-  "meaning": "(cid:314)বাকা, সহেজ (cid:437)তািরত",
+  "meaning": "Easily deceived or tricked",
   "example": "The con artist preyed upon gullible tourists."
  },
  {
   "group": 26,
   "word": "idiosyncratic",
   "synonyms": [
-   "peculiar to an individual"
+   "eccentric",
+   "quirky",
+   "unconventional"
   ],
-  "meaning": "(cid:752)ত(cid:555), ব(cid:415)ি(cid:463)গত",
+  "meaning": "Peculiar to an individual",
   "example": "Her idiosyncratic sense of style made her stand out."
  },
  {
   "group": 26,
   "word": "incidental",
   "synonyms": [
-   "occurring as a minor consequence of something more important"
+   "secondary",
+   "peripheral",
+   "subsidiary"
   ],
-  "meaning": "আনষু ি(cid:489)ক, (cid:314)গৗণ",
+  "meaning": "Occurring as a minor consequence of something more important",
   "example": "The costs of travel are incidental to the main purpose of the trip."
  },
  {
   "group": 26,
   "word": "ingrained",
   "synonyms": [
-   "firmly established",
-   "difficult to change"
+   "entrenched",
+   "deep-rooted",
+   "deep-seated"
   ],
-  "meaning": "গভীরভােব িনিহত",
+  "meaning": "Firmly established, difficult to change",
   "example": "The ingrained belief in superstitions was hard to shake off."
  },
  {
   "group": 26,
   "word": "insolent",
   "synonyms": [
-   "rude and disrespectful"
+   "impertinent",
+   "impudent",
+   "audacious"
   ],
-  "meaning": "উ(cid:541)ত, অপমানজনক",
+  "meaning": "Rude and disrespectful",
   "example": "The student's insolent remark earned him a detention."
  },
  {
   "group": 26,
   "word": "lampoon",
   "synonyms": [
-   "to ridicule or satirize"
+   "parody",
+   "burlesque",
+   "caricature"
   ],
-  "meaning": "ব(cid:415)(cid:489) করা, উপহাস",
+  "meaning": "To ridicule or satirize",
   "example": "The political cartoonist was famous for his sharp lampoons of public figures."
  },
  {
   "group": 26,
   "word": "lavish",
   "synonyms": [
-   "extravagant",
-   "luxurious"
+   "opulent",
+   "sumptuous",
+   "prodigal"
   ],
-  "meaning": "অপিরসীম, িবলাসব(cid:753)ল",
+  "meaning": "Extravagant, luxurious",
   "example": "The wedding reception was a lavish affair with a five-course meal."
  },
  {
   "group": 26,
   "word": "lugubrious",
   "synonyms": [
-   "mournful",
-   "gloomy"
+   "doleful",
+   "melancholy",
+   "dismal"
   ],
-  "meaning": "(cid:314)শাকপূণ(cid:362), িবষ(cid:525)",
+  "meaning": "Mournful, gloomy",
   "example": "The lugubrious music set a somber tone for the funeral."
  },
  {
   "group": 26,
   "word": "macabre",
   "synonyms": [
-   "disturbing",
-   "focused on death"
+   "gruesome",
+   "grisly",
+   "morbid"
   ],
-  "meaning": "ভয়(cid:486)র, মতৃ ু(cid:415)-স(cid:593)িক(cid:362)ত",
+  "meaning": "Disturbing, focused on death",
   "example": "The horror movie was filled with macabre scenes."
  },
  {
   "group": 26,
   "word": "morose",
   "synonyms": [
-   "sullen and ill-tempered"
+   "gloomy",
+   "sulky",
+   "despondent"
   ],
-  "meaning": "িবষ(cid:524), মনমরা",
+  "meaning": "Sullen and ill-tempered",
   "example": "The morose teenager refused to participate in any activities."
  },
  {
   "group": 26,
   "word": "officious",
   "synonyms": [
-   "interfering",
-   "offering unwanted help or advice"
+   "meddlesome",
+   "intrusive",
+   "impertinent"
   ],
-  "meaning": "হ(cid:645)ে(cid:472)পকারী, বাড়াবািড়",
+  "meaning": "Interfering, offering unwanted help or advice",
   "example": "The officious store clerk kept trying to steer her towards more expensive items."
  },
  {
   "group": 26,
   "word": "ramification",
   "synonyms": [
-   "consequence of an action"
+   "repercussion",
+   "implication",
+   "outcome"
   ],
-  "meaning": "(cid:437)িতি(cid:416)য়া, ফলাফল",
+  "meaning": "Consequence of an action",
   "example": "The company didn't fully understand the ramifications of its decision."
  },
  {
   "group": 26,
   "word": "serene",
   "synonyms": [
-   "calm",
-   "peaceful"
+   "tranquil",
+   "placid",
+   "composed"
   ],
-  "meaning": "(cid:437)শা(cid:557), িনরмяল",
+  "meaning": "Calm, peaceful",
   "example": "The serene lake at dawn was a breathtaking sight."
  },
  {
   "group": 26,
   "word": "supplant",
   "synonyms": [
-   "to replace",
-   "especially by force"
+   "supersede",
+   "displace",
+   "oust"
   ],
-  "meaning": "(cid:437)িত(cid:646)াপন করা, উৎখাত করা",
+  "meaning": "To replace, especially by force",
   "example": "The new technology quickly supplanted the old methods."
  },
  {
   "group": 26,
   "word": "tacit",
   "synonyms": [
-   "understood without being stated"
+   "implicit",
+   "implied",
+   "unspoken"
   ],
-  "meaning": "অনিুমত, (cid:314)বাঝা যায় এমন",
+  "meaning": "Understood without being stated",
   "example": "There was a tacit agreement between them to keep the matter secret."
  },
  {
   "group": 26,
   "word": "transcend",
   "synonyms": [
-   "to rise above or go beyond"
+   "surpass",
+   "outstrip",
+   "exceed"
   ],
-  "meaning": "অিত(cid:416)ম করা, ছািড়েয় যাওয়া",
+  "meaning": "To rise above or go beyond",
   "example": "The artist's work transcended the limitations of her medium."
  },
  {
   "group": 26,
   "word": "treatise",
   "synonyms": [
-   "formal",
-   "written work on a subject"
+   "dissertation",
+   "monograph",
+   "exposition"
   ],
-  "meaning": "(cid:419)(cid:558), (cid:437)ব(cid:564)",
+  "meaning": "Formal, written work on a subject",
   "example": "He wrote a lengthy treatise on the history of philosophy."
  },
  {
