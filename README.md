@@ -21,14 +21,16 @@ It works offline and can be installed on a phone like an app (PWA).
 | **Synonym map** | GRE Text Completion and Sentence Equivalence reward knowing word families; words sharing synonyms cluster together |
 | **Dashboard** | Shows progress by stage, mastery per group, reviews coming up and a study calendar |
 
+**Live app:** https://antukumar100.github.io/gre-vocab-bangla/ (after GitHub Pages is switched on, see below)
+
 ## Run it on your computer (Windows)
 
 1. Install [Node.js](https://nodejs.org) (LTS version).
 2. Get the code into your folder:
    ```
    cd "D:\Antu dRi\Amartay"
-   git clone -b claude/dreamy-planck-gto8kr https://github.com/antukumar100/project1.git Vocab
-   cd Vocab\vocab
+   git clone https://github.com/AntuKumar100/gre-vocab-bangla.git Vocab
+   cd Vocab
    ```
 3. Install and start:
    ```
@@ -37,14 +39,22 @@ It works offline and can be installed on a phone like an app (PWA).
    ```
 4. Open the address it prints (usually http://localhost:5173).
 
-To build a static copy you can host anywhere (GitHub Pages, Netlify, Vercel): `npm run build`.
-The output in `dist/` works from any folder because paths are relative.
+## Put it online (GitHub Pages)
+
+The workflow in `.github/workflows/deploy.yml` builds and publishes the app on every push to `main`.
+It needs GitHub Pages switched on once: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+Then open the **Actions** tab, pick the latest "Deploy to GitHub Pages" run and click **Re-run all jobs**
+(or just push any change). The site appears at `https://<your-username>.github.io/gre-vocab-bangla/`.
+
+To build a static copy yourself: `npm run build`. The `dist/` folder works from any web host or
+subfolder because all paths are relative.
 
 ### Use it on your phone
 
-Host the `dist/` folder (for example on GitHub Pages), open it in Chrome or Safari, then
-choose **Add to Home Screen**. In **Settings → Offline audio**, tap **Download all story audio** once
-to listen without internet.
+Open the live link in Chrome (Android) or Safari (iPhone), then choose **Add to Home Screen**.
+In **Settings → Offline audio**, tap **Download all story audio** once (about 92 MB) to listen
+without internet. On a group page, **Listen to all stories** plays the whole group back to back,
+which is handy on a bus.
 
 Progress is stored in the browser. Use **Settings → Export progress** to back it up or move it
 to another device.
@@ -54,6 +64,14 @@ to another device.
 - Learn: `1` need practice · `2` got it · `3` already knew it · `Space` play/pause story
 - Review: `Space` show answer, then play/pause · `1`–`4` forgot / hard / good / easy
 - Quiz: `1`–`4` choose an option · `Enter` next question
+
+## How the audio was checked
+
+Every story was narrated by the Kokoro voice model, and a sample of 150 files was transcribed with
+Whisper to confirm nothing is cut off (median 96% word match; the gaps are mostly the recogniser
+misspelling names like Tanvir). Headwords whose GRE meaning changes how they are said
+(*minute* = my-NOOT, *content*, *august*, *intimate* as a verb, *compound* and *discount* as verbs)
+have pronunciation overrides in `scripts/gen_audio.py`.
 
 ## Project layout
 

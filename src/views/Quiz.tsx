@@ -100,7 +100,10 @@ export function Quiz({ source }: { source: string[] }) {
     ["/quiz/starred", "Difficult (starred)"],
     ["/quiz/trouble", "Most missed"],
     ["/quiz/all", "All words"],
+    ...index.groups.map((g): [string, string] => [`/quiz/group/${g}`, `Group ${g}`]),
   ];
+  const current = source[0] ? `/quiz/${source.filter(Boolean).join("/")}` : "/quiz/all";
+  const known = sources.some(([href]) => href === current);
   return (
     <div className="page">
       <h1>Quiz</h1>
@@ -108,22 +111,15 @@ export function Quiz({ source }: { source: string[] }) {
       <section className="panel quiz-setup">
         <label className="field">
           <span>Words</span>
-          <select
-            value={location.hash.slice(1)}
-            onChange={(e) => go(e.target.value)}
-          >
-            <option value={location.hash.slice(1)}>{title} ({pool.length})</option>
+          <select value={known ? current : "custom"} onChange={(e) => go(e.target.value)}>
+            {!known && <option value="custom">{title}</option>}
             {sources.map(([href, label]) => (
               <option key={href} value={href}>
                 {label}
               </option>
             ))}
-            {index.groups.map((g) => (
-              <option key={g} value={`/quiz/group/${g}`}>
-                Group {g}
-              </option>
-            ))}
           </select>
+          <span className="muted small">{pool.length} words</span>
         </label>
         <div className="field">
           <span>Question type</span>

@@ -1,5 +1,5 @@
 import { forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY, type SimulationNodeDatum } from "d3-force";
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTooltip } from "../charts/Tooltip";
 import { Icon } from "../components/Icon";
 import { useApp } from "../lib/context";
@@ -77,7 +77,7 @@ function layout(nodes: GNode[], links: GLink[]) {
     .force("x", forceX(0).strength(0.05))
     .force("y", forceY(0).strength(0.07))
     // Labels are wide, so give each node room roughly proportional to its text.
-    .force("collide", forceCollide<GNode>((n) => (n.home ? 8 + n.label.length * 3.6 : n.word ? 6 + n.label.length * 3 : 4 + n.label.length * 2.4)).strength(0.9))
+    .force("collide", forceCollide<GNode>((n) => (n.home ? 10 + n.label.length * 4.3 : n.word ? 8 + n.label.length * 3.7 : 5 + n.label.length * 3)).strength(0.9))
     .stop();
   for (let i = 0; i < 400; i++) sim.tick();
   const xs = nodes.map((n) => n.x!);
@@ -96,6 +96,8 @@ export function SynonymMap({ group }: { group: number }) {
   const { cards } = useProgress();
   const [hover, setHover] = useState<string | null>(null);
   const { ref, show, hide, node: tip } = useTooltip();
+  const scroller = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
 
   const graph = useMemo(() => {
     const g = buildGraph(index.byGroup.get(group) ?? [], index.words);
@@ -109,6 +111,25 @@ export function SynonymMap({ group }: { group: number }) {
     }
     return { ...g, box, neighbors };
   }, [index, group]);
+
+  // Start at a zoom where labels stay readable (scroll to pan), centred on the graph.
+  const fit = () => {
+    const el = scroller.current;
+    if (!el) return 1;
+    return Math.min(1.2, Math.max(0.8, el.clientWidth / graph.box.w));
+  };
+  useLayoutEffect(() => {
+    setZoom(fit());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graph]);
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) {
+      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+      el.scrollTop = (el.scrollHeight - el.clientHeight) / 2;
+    }
+  }, [graph, zoom]);
+  const zoomBy = (f: number) => setZoom((z) => Math.min(2.5, Math.max(0.4, z * f)));
 
   const active = hover ? new Set([hover, ...(graph.neighbors.get(hover) ?? [])]) : null;
   const pick = (n: GNode) => n.word && openWord(n.word.id);
@@ -134,8 +155,22 @@ export function SynonymMap({ group }: { group: number }) {
         Hover or tap a word to see its links; click to open it.
       </p>
       <div className="map-wrap" ref={ref}>
+        <div className="map-zoom" role="group" aria-label="Zoom">
+          <button className="icon-btn" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">
+            −
+          </button>
+          <button className="icon-btn" onClick={() => setZoom(fit())} aria-label="Reset zoom">
+            ⤢
+          </button>
+          <button className="icon-btn" onClick={() => zoomBy(1.25)} aria-label="Zoom in">
+            +
+          </button>
+        </div>
+        <div className="map-scroll" ref={scroller}>
         <svg
           className="synmap"
+          width={graph.box.w * zoom}
+          height={graph.box.h * zoom}
           viewBox={`${graph.box.x} ${graph.box.y} ${graph.box.w} ${graph.box.h}`}
           role="img"
           aria-label={`Synonym network for group ${group}`}
@@ -171,12 +206,13 @@ export function SynonymMap({ group }: { group: number }) {
                   }}
                   onClick={() => pick(n)}
                 >
+                  {n.word && <rect className="hit" x={-n.label.length * 4.5 - 6} y={-30} width={n.label.length * 9 + 12} height={44} />}
                   {n.word ? (
-                    <circle r={n.home ? 8 : 6} className={`stage-fill-${stage}`} />
+                    <circle r={n.home ? 9 : 7} className={`stage-fill-${stage}`} />
                   ) : (
-                    <circle r={3.5} className="syn-dot" />
+                    <circle r={4} className="syn-dot" />
                   )}
-                  <text y={n.word ? -12 : -7} textAnchor="middle">
+                  <text y={n.word ? -14 : -8} textAnchor="middle">
                     {n.label}
                   </text>
                 </g>
@@ -184,6 +220,7 @@ export function SynonymMap({ group }: { group: number }) {
             })}
           </g>
         </svg>
+        </div>
         {tip}
       </div>
       <ul className="legend">

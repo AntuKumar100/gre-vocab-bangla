@@ -37,6 +37,29 @@ def narration(entry):
     return f"{entry['word'].capitalize()}. {entry['story']}"
 
 
+# Headwords whose GRE sense is pronounced differently from espeak's default
+# reading: (default IPA, correct IPA, how many occurrences to fix; None = all).
+PRONUNCIATION = {
+    "minute": ("mˈɪnɪt", "maɪnˈuːt", None),
+    "content": ("kˈɑːntɛnt", "kəntˈɛnt", None),
+    "august": ("ˈɔːɡəst", "ɔːɡˈʌst", None),
+    "intimate": ("ˈɪntᵻmət", "ˈɪntᵻmˌeɪt", 2),  # the story's last uses are the adjective
+    "compound": ("kˈɑːmpaʊnd", "kəmpˈaʊnd", None),
+    "discount": ("dˈɪskaʊnt", "dɪskˈaʊnt", None),
+}
+
+
+def phonemes_for(kokoro, entry, text):
+    fix = PRONUNCIATION.get(entry["word"])
+    if not fix:
+        return None
+    wrong, right, count = fix
+    ipa = kokoro.tokenizer.phonemize(text, "en-us")
+    if wrong not in ipa:
+        raise SystemExit(f"{entry['word']}: expected {wrong} in phonemes, got {ipa[:80]}")
+    return ipa.replace(wrong, right, -1 if count is None else count)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("model_dir")
@@ -53,7 +76,9 @@ def main():
         for e in json.loads(f.read_text(encoding="utf-8")):
             eid = entry_id(int(f.stem), e["word"])
             text = narration(e)
-            key = hashlib.sha1(f"{args.voice}|{args.speed}|{text}".encode()).hexdigest()[:12]
+            fix = PRONUNCIATION.get(e["word"])
+            key_src = f"{args.voice}|{args.speed}|{text}" + (f"|{fix}" if fix else "")
+            key = hashlib.sha1(key_src.encode()).hexdigest()[:12]
             out = AUDIO / f"{eid}.mp3"
             if manifest.get(eid) != key or not out.exists():
                 todo.append((eid, e, text, key, out))
@@ -63,7 +88,11 @@ def main():
     kokoro = Kokoro(f"{args.model_dir}/kokoro-v1.0.onnx", f"{args.model_dir}/voices-v1.0.bin")
     done = {}
     for i, (eid, e, text, key, out) in enumerate(todo, 1):
-        samples, sr = kokoro.create(text, voice=args.voice, speed=args.speed, lang="en-us")
+        ipa = phonemes_for(kokoro, e, text)
+        if ipa:
+            samples, sr = kokoro.create(ipa, voice=args.voice, speed=args.speed, lang="en-us", is_phonemes=True)
+        else:
+            samples, sr = kokoro.create(text, voice=args.voice, speed=args.speed, lang="en-us")
         wav = io.BytesIO()
         sf.write(wav, samples, sr, format="WAV")
         subprocess.run(

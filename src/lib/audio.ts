@@ -6,13 +6,26 @@ import type { Word } from "./types";
 // One shared player so starting a story stops whatever was playing.
 const player = typeof Audio !== "undefined" ? new Audio() : null;
 let currentId: string | null = null;
+/** Stories still to play in "listen to all" mode. */
+let queue: Word[] = [];
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
 
 if (player) {
-  for (const ev of ["play", "pause", "ended", "timeupdate", "loadedmetadata", "error"]) {
+  for (const ev of ["play", "pause", "timeupdate", "loadedmetadata", "error"]) {
     player.addEventListener(ev, notify);
   }
+  player.addEventListener("ended", () => {
+    const next = queue.shift();
+    if (next) setTimeout(() => startStory(next), 700);
+    notify();
+  });
 }
 
 interface PlayerState {
@@ -20,20 +33,25 @@ interface PlayerState {
   playing: boolean;
   progress: number;
   error: boolean;
+  /** Stories left in "listen to all" mode, including the current one. */
+  listening: number;
 }
 
-let snapshot: PlayerState = { id: null, playing: false, progress: 0, error: false };
+let snapshot: PlayerState = { id: null, playing: false, progress: 0, error: false, listening: 0 };
 function getSnapshot(): PlayerState {
+  const playing = !!player && !player.paused && !player.ended;
   const next: PlayerState = {
     id: currentId,
-    playing: !!player && !player.paused && !player.ended,
+    playing,
     progress: player && player.duration ? player.currentTime / player.duration : 0,
     error: !!player?.error,
+    listening: queue.length + (playing || queue.length ? 1 : 0),
   };
   if (
     next.id !== snapshot.id ||
     next.playing !== snapshot.playing ||
     next.error !== snapshot.error ||
+    next.listening !== snapshot.listening ||
     Math.abs(next.progress - snapshot.progress) > 0.002
   ) {
     snapshot = next;
@@ -41,7 +59,7 @@ function getSnapshot(): PlayerState {
   return snapshot;
 }
 
-export function playStory(w: Word) {
+function startStory(w: Word) {
   if (!player) return;
   if (currentId !== w.id) {
     currentId = w.id;
@@ -51,12 +69,29 @@ export function playStory(w: Word) {
   player.play().catch(() => notify());
 }
 
+/** Play one story; this ends any "listen to all" run. */
+export function playStory(w: Word) {
+  queue = [];
+  startStory(w);
+}
+
+/** Play several stories back to back, e.g. a whole group while commuting. */
+export function playAll(words: Word[]) {
+  const list = words.filter((w) => w.audio);
+  if (!list.length) return;
+  queue = list.slice(1);
+  startStory(list[0]);
+}
+
 export function stopStory() {
+  queue = [];
   player?.pause();
+  notify();
 }
 
 export function toggleStory(w: Word) {
   if (currentId === w.id && player && !player.paused) player.pause();
+  else if (currentId === w.id && player && queue.length) player.play().catch(() => notify());
   else playStory(w);
 }
 
@@ -65,9 +100,13 @@ export function seekStory(fraction: number) {
 }
 
 export function useStoryPlayer(w: Word) {
-  const s = useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), getSnapshot);
+  const s = useSyncExternalStore(subscribe, getSnapshot);
   const mine = s.id === w.id;
   return { playing: mine && s.playing, progress: mine ? s.progress : 0, error: mine && s.error };
+}
+
+export function usePlayerState() {
+  return useSyncExternalStore(subscribe, getSnapshot);
 }
 
 /** Pronounce a single word with the browser's speech engine. */

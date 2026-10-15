@@ -1,5 +1,6 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { StoryPlayer } from "../components/Story";
+import { rowProps } from "../lib/a11y";
 import { useApp } from "../lib/context";
 import { stageOf, useProgress } from "../lib/store";
 import { STAGES, STAGE_LABEL, type Stage } from "../lib/types";
@@ -11,20 +12,25 @@ export function Words() {
   const [stage, setStage] = useState<Stage | "all" | "starred">("all");
   const query = useDeferredValue(q.trim().toLowerCase());
 
-  const results = useMemo(
-    () =>
-      index.words.filter((w) => {
-        if (stage === "starred" ? !starred.includes(w.id) : stage !== "all" && stageOf(cards[w.id]) !== stage) return false;
-        if (!query) return true;
-        return (
-          w.word.includes(query) ||
-          w.en.toLowerCase().includes(query) ||
-          w.bn.includes(query) ||
-          w.synonyms.some((s) => s.includes(query))
-        );
-      }),
-    [index, query, stage, cards, starred],
-  );
+  const results = useMemo(() => {
+    const inStage = index.words.filter((w) =>
+      stage === "starred" ? starred.includes(w.id) : stage === "all" || stageOf(cards[w.id]) === stage,
+    );
+    if (!query) return inStage;
+    // Headword matches first (exact, then prefix), then meaning or synonym matches.
+    const rank = (w: (typeof inStage)[number]) => {
+      if (w.word === query) return 0;
+      if (w.word.startsWith(query)) return 1;
+      if (w.word.includes(query)) return 2;
+      if (w.en.toLowerCase().includes(query) || w.bn.includes(query) || w.synonyms.some((s) => s.includes(query))) return 3;
+      return -1;
+    };
+    return inStage
+      .map((w) => ({ w, r: rank(w) }))
+      .filter((x) => x.r >= 0)
+      .sort((a, b) => a.r - b.r)
+      .map((x) => x.w);
+  }, [index, query, stage, cards, starred]);
 
   return (
     <div className="page">
@@ -48,7 +54,7 @@ export function Words() {
       <p className="muted small">{results.length} words</p>
       <ul className="word-list">
         {results.slice(0, 300).map((w) => (
-          <li key={w.id} className="word-row" onClick={() => openWord(w.id)}>
+          <li key={w.id} className="word-row" {...rowProps(() => openWord(w.id))}>
             <div className="wr-main">
               <span className="wr-word">{w.word}</span>
               <span className="wr-en">{w.en}</span>

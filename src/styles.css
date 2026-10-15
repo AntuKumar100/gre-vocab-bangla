@@ -829,6 +829,11 @@ main.session {
   background: var(--surface-2);
 }
 
+.word-row.now-playing {
+  background: var(--accent-soft);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
 .wr-main {
   flex: 1;
   display: grid;
@@ -1448,12 +1453,38 @@ input[type="search"],
   overflow: hidden;
 }
 
+.map-scroll {
+  overflow: auto;
+  max-height: 72vh;
+  overscroll-behavior: contain;
+}
+
+.map-zoom {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.map-zoom .icon-btn {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
 .synmap {
   display: block;
-  width: 100%;
-  height: auto;
-  max-height: 78vh;
-  touch-action: pan-x pan-y pinch-zoom;
+  margin: 0 auto;
+}
+
+.synmap .hit {
+  fill: transparent;
 }
 
 .synmap line {
@@ -1498,7 +1529,7 @@ input[type="search"],
 }
 
 .synmap text {
-  font-size: 10px;
+  font-size: 11px;
   fill: var(--muted);
   paint-order: stroke;
   stroke: var(--surface);
@@ -1507,13 +1538,13 @@ input[type="search"],
 }
 
 .synmap .node.word text {
-  font-size: 11px;
+  font-size: 13px;
   fill: var(--text-2);
   font-weight: 600;
 }
 
 .synmap .node.home text {
-  font-size: 13px;
+  font-size: 15px;
   fill: var(--text);
   font-weight: 700;
 }
