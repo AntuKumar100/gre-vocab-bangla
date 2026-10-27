@@ -113,7 +113,7 @@ function usePool(source: string[]): { title: string; pool: Word[] } {
     const { cards, starred, misses } = getProgress();
     if (kind === "group") {
       const g = Number(arg);
-      return { title: `Group ${g}`, pool: index.byGroup.get(g) ?? [] };
+      return { title: `Set ${g}`, pool: index.byGroup.get(g) ?? [] };
     }
     if (kind === "ids") return { title: "Just learned", pool: (arg ?? "").split(",").map((id) => index.byId.get(id)!).filter(Boolean) };
     if (kind === "starred") return { title: "Difficult words", pool: index.words.filter((w) => starred.includes(w.id)) };
@@ -157,7 +157,7 @@ export function Quiz({ source }: { source: string[] }) {
     ["/quiz/starred", "Difficult (starred)"],
     ["/quiz/trouble", "Most missed"],
     ["/quiz/all", "All words"],
-    ...index.groups.map((g): [string, string] => [`/quiz/group/${g}`, `Group ${g}`]),
+    ...index.groups.map((g): [string, string] => [`/quiz/group/${g}`, `Set ${g}`]),
   ];
   const current = source[0] ? `/quiz/${source.filter(Boolean).join("/")}` : "/quiz/all";
   const known = sources.some(([href]) => href === current);

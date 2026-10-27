@@ -1,25 +1,20 @@
-// Merge content/source.json (synonyms + example from the PDF) with the
-// hand-written content/groups/*.json into public/data/vocab.json for the app.
+// Merge content/sets/*.json into the app's data: public/data/vocab.json holds what the first
+// screen needs; public/data/details.json (stories, hooks, examples, GRE items) loads right after.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const source = JSON.parse(readFileSync(join(root, "content/source.json"), "utf8"));
-const groupsDir = join(root, "content/groups");
+const setsDir = join(root, "content/sets");
 
-const entryId = (group, word) =>
-  `${String(group).padStart(2, "0")}-` + word.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+// One id per headword; the narration file is named after it.
+const wordId = (word) => word.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const words = [];
-for (const file of readdirSync(groupsDir).filter((f) => f.endsWith(".json")).sort()) {
+for (const file of readdirSync(setsDir).filter((f) => f.endsWith(".json")).sort()) {
   const group = Number(file.slice(0, 2));
-  const fromPdf = source.filter((e) => e.group === group);
-  const written = JSON.parse(readFileSync(join(groupsDir, file), "utf8"));
-  written.forEach((w, i) => {
-    const pdf = fromPdf[i];
-    if (!pdf || pdf.word !== w.word) throw new Error(`group ${group}: ${w.word} does not match source.json`);
-    const id = entryId(group, w.word);
+  for (const w of JSON.parse(readFileSync(join(setsDir, file), "utf8"))) {
+    const id = wordId(w.word);
     words.push({
       id,
       group,
@@ -29,14 +24,18 @@ for (const file of readdirSync(groupsDir).filter((f) => f.endsWith(".json")).sor
       bn: w.bn,
       hook: w.hook,
       story: w.story,
-      synonyms: pdf.synonyms,
-      example: pdf.example,
+      synonyms: w.synonyms ?? [],
+      example: w.example ?? "",
       ...(w.gre && { gre: w.gre }),
       audio: existsSync(join(root, "public/audio", `${id}.mp3`)),
     });
-  });
+  }
 }
 
+const DETAIL = ["hook", "story", "example", "gre"];
+const core = words.map((w) => Object.fromEntries(Object.entries(w).filter(([k]) => !DETAIL.includes(k))));
+const details = Object.fromEntries(words.map((w) => [w.id, Object.fromEntries(DETAIL.filter((k) => w[k] !== undefined).map((k) => [k, w[k]]))]));
 mkdirSync(join(root, "public/data"), { recursive: true });
-writeFileSync(join(root, "public/data/vocab.json"), JSON.stringify(words));
+writeFileSync(join(root, "public/data/vocab.json"), JSON.stringify(core));
+writeFileSync(join(root, "public/data/details.json"), JSON.stringify(details));
 console.log(`vocab.json: ${words.length} words, ${words.filter((w) => w.audio).length} with audio`);

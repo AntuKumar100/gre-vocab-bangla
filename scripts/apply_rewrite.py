@@ -1,4 +1,4 @@
-"""Merge a batch of rewritten stories and GRE sentence items into content/groups/NN.json.
+"""Merge a batch of rewritten stories and GRE sentence items into content/sets/NN.json.
 
 Batch file: JSON list of {word, story, s, pair, trap, clue}, in the group's word order.
   s     GRE-style sentence with one blank written as ____ where the word fits
@@ -6,7 +6,7 @@ Batch file: JSON list of {word, story, s, pair, trap, clue}, in the group's word
   trap  a tempting wrong answer, usually the opposite of what the clue demands
   clue  the phrase in s that points to the answer (shown in explanations)
 
-Usage: python scripts/apply_rewrite.py <group-number> <batch.json>
+Usage: python scripts/apply_rewrite.py <set-number> <batch.json>
 """
 import json
 import re
@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def main(group, batch_path):
-    path = ROOT / "content" / "groups" / f"{group:02d}.json"
+    path = ROOT / "content" / "sets" / f"{group:02d}.json"
     entries = json.loads(path.read_text(encoding="utf-8"))
     batch = json.loads(Path(batch_path).read_text(encoding="utf-8"))
     if [b["word"] for b in batch] != [e["word"] for e in entries]:

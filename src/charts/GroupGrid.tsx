@@ -13,12 +13,12 @@ function masteryScore(g: GroupStat) {
   return STAGES.reduce((s, k) => s + g.counts[k] * WEIGHT[k], 0) / (g.total || 1);
 }
 
-/** Heatmap of the 38 groups: darker blue means more of the group is mastered. */
+/** Heatmap of the sets: darker means more of the set is mastered. */
 export function GroupGrid({ stats, onPick }: { stats: GroupStat[]; onPick: (g: number) => void }) {
   const { ref, show, hide, node } = useTooltip();
   const describe = (g: GroupStat) => (
     <>
-      <strong>Group {g.group}</strong> · {Math.round(masteryScore(g) * 100)}% mastery
+      <strong>Set {g.group}</strong> · {Math.round(masteryScore(g) * 100)}% mastery
       <br />
       {STAGES.filter((s) => g.counts[s]).map((s) => `${g.counts[s]} ${STAGE_LABEL[s].toLowerCase()}`).join(" · ")}
     </>
@@ -38,7 +38,7 @@ export function GroupGrid({ stats, onPick }: { stats: GroupStat[]; onPick: (g: n
               onPointerLeave={hide}
               onFocus={(e) => show(e, describe(g))}
               onBlur={hide}
-              aria-label={`Group ${g.group}, ${Math.round(score * 100)} percent mastery`}
+              aria-label={`Set ${g.group}, ${Math.round(score * 100)} percent mastery`}
             >
               {g.group}
             </button>

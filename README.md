@@ -1,6 +1,6 @@
 # Shobdo Quest · GRE words in Bangla
 
-A game-like web app for learning the GregMAT GRE word list (groups 1–38, 1,111 entries) fast.
+A game-like app for learning 1,110 GRE® words fast, with Bangla meanings. It runs on the web and as an Android app.
 Every word has:
 
 - a clear **English meaning** and a **Bangla meaning (বাংলা অর্থ)**
@@ -8,7 +8,7 @@ Every word has:
 - a short **story** (about 75 words) set in Bangladeshi life or on the GRE, with the word highlighted
 - **narrated audio of the story** in a warm, slow female voice (open-source Kokoro model)
 - a **GRE-style sentence** with a blank, a synonym pair, a trap answer and the clue phrase
-- the synonyms and the example sentence from the PDF
+- synonyms and an example sentence
 
 It works offline and can be installed on a phone like an app (PWA).
 
@@ -16,14 +16,16 @@ It works offline and can be installed on a phone like an app (PWA).
 
 | Feature | Why it works |
 | --- | --- |
-| **Learn** a group: meaning, Bangla, hook, then hear the story | Several cues (sound, story, native language) per word make it stick |
+| **Learn** a set: meaning, Bangla, hook, then hear the story | Several cues (sound, story, native language) per word make it stick |
 | **Review** with spaced repetition (FSRS) | Each word comes back right before you would forget it, so 15–20 minutes a day covers the whole list |
 | **Practice: Sentence Equivalence** (pick 2 of 6) and **Text Completion** (pick 1 of 5) | The real GRE formats. After each answer the clue is highlighted, the synonym pair explained and the trap answer crossed out |
 | **Practice**: meaning, বাংলা, reverse, synonym and spelling questions; optional GRE-pace timer | Active recall is much stronger than rereading; a wrong answer shows the hook at once |
 | **XP, levels, streaks and combos**, with confetti and sound effects | A daily XP goal and a streak flame make short daily sessions a habit (both can be turned off in Settings) |
-| **Quest path** of all 38 groups | Each group's ring fills as you learn it and turns gold as words are mastered |
+| **Quest path** of 37 sets, from the most common words to the rarest | Each set's ring fills as you learn it and turns gold as words are mastered |
+| **Welcome and daily plan**: test date, a 10-word level check, new words per day | The plan adapts to the time left before the test |
+| **Bangla or English interface**, daily reminders (Android), backups | Made for students in Bangladesh |
 | **Synonym map** | GRE Text Completion and Sentence Equivalence reward knowing word families; words sharing synonyms cluster together |
-| **Dashboard** | Shows progress by stage, mastery per group, reviews coming up and a study calendar |
+| **Dashboard** | Shows progress by stage, mastery per set, reviews coming up and a study calendar |
 
 **Live app:** https://antukumar100.github.io/gre-vocab-bangla/
 
@@ -56,7 +58,7 @@ subfolder because all paths are relative.
 
 Open the live link in Chrome (Android) or Safari (iPhone), then choose **Add to Home Screen**.
 In **Settings → Offline audio**, tap **Download all story audio** once (about 92 MB) to listen
-without internet. On a group page, **Listen to all stories** plays the whole group back to back,
+without internet. On a set's page, **Listen to all stories** plays the whole set back to back,
 which is handy on a bus.
 
 Progress is stored in the browser. Use **Settings → Export progress** to back it up or move it
@@ -83,20 +85,24 @@ have pronunciation overrides in `scripts/gen_audio.py`.
 ## Project layout
 
 ```
-content/source.json        English columns extracted from the PDF (synonyms, example)
-content/groups/NN.json     meanings, Bangla, hooks, stories and GRE items for group NN
+content/sets/NN.json       everything about the 30 words in set NN: meanings, Bangla, hook, story,
+                           synonyms, example and GRE item
 content/audio-manifest.json which story text each MP3 was generated from
 public/audio/NN-word.mp3   narrated stories
-scripts/extract_pdf.py     rebuilds source.json from the PDF
 scripts/gen_audio.py       generates missing or changed story audio
-scripts/apply_rewrite.py   validates and merges a batch of new stories and GRE items into a group
+scripts/apply_rewrite.py   validates and merges a batch of new stories and GRE items into a set
+scripts/apply_extras.py    validates and merges synonyms, examples and definitions into a set
+scripts/check_content.py   checks every word has every field, a valid GRE item and its audio
+tests/                     end-to-end tests (npm test), run before every deploy
+android/                   the Android app (Capacitor); see store/ANDROID.md
+store/                     Google Play listing text, graphics and publishing guide
 scripts/build-data.mjs     merges everything into public/data/vocab.json (runs before dev/build)
 src/                       the React app
 ```
 
 ### Edit a word or story
 
-Change the entry in `content/groups/NN.json` and push: the audio workflow narrates it again.
+Change the entry in `content/sets/NN.json` and push: the audio workflow narrates it again.
 To do it locally instead:
 
 ```
@@ -108,6 +114,28 @@ The script only regenerates stories whose text changed. It needs `ffmpeg` on you
 Download the model files from
 https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0.
 
-A note on the PDF: its Bangla text cannot be copied out correctly (conjunct letters are lost
-and vowel signs come out in the wrong order), and some entries had errors, such as a Hindi word
-in *insipid*. So every Bangla meaning here was written fresh rather than extracted.
+## Where the content comes from
+
+The word selection started from GregMAT's free GRE word list. Everything the app shows is written for
+this project: definitions, Bangla meanings, memory hooks, stories, synonym lists, example sentences and
+GRE questions. The words are arranged into 37 sets of 30 by how common each word is in English
+(using the [wordfreq](https://github.com/rspeer/wordfreq) data), most common first. Earlier commits in
+this repository's history still contain text copied from the original PDF.
+
+GRE® is a registered trademark of ETS. This app is not endorsed or approved by ETS.
+
+## Android app
+
+`store/ANDROID.md` explains how to install the latest build on a phone, set up signing and publish on
+Google Play; `store/listing.md` has the store listing text and `store/graphics/` the icon, feature
+graphic and screenshots.
+
+## Tests
+
+```
+npm run build
+npm test
+```
+
+The tests walk through first run, learning, review, both GRE question types, the Bangla interface
+and progress migration on a phone and a desktop screen. GitHub runs them before every deploy.

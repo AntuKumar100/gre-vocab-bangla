@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GameLayer } from "./components/GameLayer";
 import { Icon, type IconName } from "./components/Icon";
 import { LogoMark, Wordmark } from "./components/Logo";
@@ -7,24 +8,29 @@ import { WordDetail } from "./components/WordDetail";
 import { stopStory } from "./lib/audio";
 import { Ctx, type AppCtx } from "./lib/context";
 import { useWords } from "./lib/data";
+import { useT } from "./lib/i18n";
 import { go, useRoute } from "./lib/router";
 import { dueIds, levelOf, streak, useProgress } from "./lib/store";
 import { Dashboard } from "./views/Dashboard";
 import { GroupView } from "./views/GroupView";
 import { Groups } from "./views/Groups";
 import { Learn } from "./views/Learn";
-import { Quiz } from "./views/Quiz";
 import { Review } from "./views/Review";
-import { Settings } from "./views/Settings";
-import { SynonymMap } from "./views/SynonymMap";
-import { Words } from "./views/Words";
+
+// Screens visited less often load on demand, so the first screen appears sooner.
+const Quiz = lazy(() => import("./views/Quiz").then((m) => ({ default: m.Quiz })));
+const SynonymMap = lazy(() => import("./views/SynonymMap").then((m) => ({ default: m.SynonymMap })));
+const Words = lazy(() => import("./views/Words").then((m) => ({ default: m.Words })));
+const Settings = lazy(() => import("./views/Settings").then((m) => ({ default: m.Settings })));
+const About = lazy(() => import("./views/About").then((m) => ({ default: m.About })));
+const Privacy = lazy(() => import("./views/About").then((m) => ({ default: m.Privacy })));
+const Onboarding = lazy(() => import("./views/Onboarding").then((m) => ({ default: m.Onboarding })));
 
 const NAV: { path: string; label: string; icon: IconName; match: string[] }[] = [
   { path: "/", label: "Home", icon: "home", match: [""] },
-  { path: "/groups", label: "Groups", icon: "layers", match: ["groups", "group", "learn"] },
+  { path: "/groups", label: "Sets", icon: "layers", match: ["groups", "group", "learn", "map"] },
   { path: "/review", label: "Review", icon: "repeat", match: ["review"] },
   { path: "/quiz", label: "Practice", icon: "target", match: ["quiz"] },
-  { path: "/map/1", label: "Map", icon: "network", match: ["map"] },
   { path: "/words", label: "Words", icon: "search", match: ["words"] },
 ];
 
@@ -34,13 +40,21 @@ function useTheme() {
     const root = document.documentElement;
     if (settings.theme === "system") root.removeAttribute("data-theme");
     else root.setAttribute("data-theme", settings.theme);
-  }, [settings.theme]);
+    root.lang = settings.lang;
+  }, [settings.theme, settings.lang]);
 }
+
+const spinner = (
+  <div className="page center-page">
+    <div className="spinner" aria-label="Loading" />
+  </div>
+);
 
 export default function App() {
   const { index, error } = useWords();
   const route = useRoute();
   const progress = useProgress();
+  const t = useT();
   const [openId, setOpenId] = useState<string | null>(null);
   useTheme();
 
@@ -60,6 +74,19 @@ export default function App() {
   const due = useMemo(() => dueIds().length, [progress.cards, routeKey]);
 
   if (error) return <div className="page center-page"><p>{error}</p></div>;
+
+  // The welcome screens need no word data until the level check, so show them at once.
+  if (!progress.settings.onboarded)
+    return (
+      <Ctx.Provider value={ctx}>
+        <ErrorBoundary>
+          <Suspense fallback={spinner}>
+            <Onboarding />
+          </Suspense>
+        </ErrorBoundary>
+      </Ctx.Provider>
+    );
+
   if (!ctx)
     return (
       <div className="page center-page">
@@ -71,6 +98,8 @@ export default function App() {
     );
 
   const [head, arg, arg2] = route;
+  // Study screens show stories and GRE items, which load a moment after the word list.
+  const needsDetails = head === "learn" || head === "review" || head === "quiz";
   let view;
   switch (head) {
     case undefined:
@@ -100,6 +129,12 @@ export default function App() {
     case "settings":
       view = <Settings />;
       break;
+    case "about":
+      view = <About />;
+      break;
+    case "privacy":
+      view = <Privacy />;
+      break;
     default:
       view = <Dashboard />;
   }
@@ -119,7 +154,7 @@ export default function App() {
           {NAV.map((n) => (
             <a key={n.path} href={`#${n.path}`} className={n.match.includes(head ?? "") ? "on" : ""}>
               <Icon name={n.icon} size={18} />
-              <span>{n.label}</span>
+              <span>{t(n.label)}</span>
               {n.path === "/review" && due > 0 && <span className="badge">{due}</span>}
             </a>
           ))}
@@ -137,25 +172,33 @@ export default function App() {
             </span>
           </span>
         </div>
-        <a href="#/settings" className={`icon-btn${head === "settings" ? " on" : ""}`} aria-label="Settings">
+        <a href="#/settings" className={`icon-btn${head === "settings" || head === "about" ? " on" : ""}`} aria-label={t("Settings")}>
           <Icon name="settings" />
         </a>
       </header>
       <main className={inSession ? "session" : ""}>
-        <div className="route-anim" key={`${head}/${arg}`}>
-          {view}
-        </div>
+        <ErrorBoundary key={routeKey}>
+          <Suspense fallback={spinner}>
+            {needsDetails && !ctx.index.detailsReady ? (
+              spinner
+            ) : (
+              <div className="route-anim" key={`${head}/${arg}`}>
+                {view}
+              </div>
+            )}
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <nav className="bottomnav" aria-label="Main">
         {NAV.map((n) => (
           <a key={n.path} href={`#${n.path}`} className={n.match.includes(head ?? "") ? "on" : ""}>
             <Icon name={n.icon} size={22} />
-            <span>{n.label}</span>
+            <span>{t(n.label)}</span>
             {n.path === "/review" && due > 0 && <span className="badge">{due}</span>}
           </a>
         ))}
       </nav>
-      <GameLayer />
+      <GameLayer routeKey={routeKey} />
       {openW && (
         <Modal onClose={() => setOpenId(null)} label={openW.word}>
           <WordDetail w={openW} key={openW.id} />

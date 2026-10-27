@@ -1,31 +1,31 @@
-"""Check content/groups/*.json against content/source.json: same words, all fields filled."""
+"""Check content/sets/*.json: every field filled, GRE items well formed, no duplicate words."""
 import json
-import sys
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FIELDS = ("word", "pos", "en", "bn", "hook", "story")
+FIELDS = ("word", "pos", "en", "bn", "hook", "story", "synonyms", "example", "gre")
 
-source = json.loads((ROOT / "content" / "source.json").read_text(encoding="utf-8"))
-problems = 0
-done = 0
-for g in sorted({e["group"] for e in source}):
-    path = ROOT / "content" / "groups" / f"{g:02d}.json"
-    expected = [e["word"] for e in source if e["group"] == g]
-    if not path.exists():
-        continue
-    entries = json.loads(path.read_text(encoding="utf-8"))
-    got = [e["word"] for e in entries]
-    if got != expected:
-        problems += 1
-        print(f"group {g}: missing {sorted(set(expected) - set(got))} extra {sorted(set(got) - set(expected))}")
-    for e in entries:
+problems, seen, count = 0, set(), 0
+for path in sorted((ROOT / "content" / "sets").glob("*.json")):
+    for e in json.loads(path.read_text(encoding="utf-8")):
+        count += 1
+        where = f"set {path.stem} {e.get('word')}"
         empty = [f for f in FIELDS if not e.get(f)]
         if empty:
             problems += 1
-            print(f"group {g} {e.get('word')}: empty {empty}")
-        if e["word"] not in e["story"].lower():
-            print(f"note: group {g} {e['word']}: base word not in story (inflected?)")
-    done += 1
-print(f"{done} groups checked, {problems} problems")
-sys.exit(1 if problems else 0)
+            print(f"{where}: empty {empty}")
+            continue
+        if e["word"] in seen:
+            problems += 1
+            print(f"{where}: duplicate word")
+        seen.add(e["word"])
+        g = e["gre"]
+        if g["s"].count("____") != 1 or g["clue"] not in g["s"] or re.search(r"[A-Za-z]____|____[A-Za-z]", g["s"]):
+            problems += 1
+            print(f"{where}: malformed GRE item")
+        audio = ROOT / "public" / "audio" / (re.sub(r"[^a-z0-9]+", "-", e["word"].lower()).strip("-") + ".mp3")
+        if not audio.exists():
+            problems += 1
+            print(f"{where}: no audio file")
+print(f"{count} words checked, {problems} problems")

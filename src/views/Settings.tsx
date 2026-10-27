@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { Icon } from "../components/Icon";
+import { APP_NAME, TRADEMARK, VERSION } from "../lib/brand";
+import { useT } from "../lib/i18n";
+import { isNative, saveBackup, setDailyReminder } from "../lib/native";
+import { go } from "../lib/router";
 import { cachedAudioCount, downloadAllAudio } from "../lib/audio";
 import { useApp } from "../lib/context";
-import { exportProgress, importProgress, resetProgress, updateSettings, useProgress, type Theme } from "../lib/store";
+import { exportProgress, importProgress, resetProgress, today, updateSettings, useProgress, type Theme } from "../lib/store";
 
 export function Settings() {
   const { index } = useApp();
   const { settings } = useProgress();
+  const t = useT();
   const [dl, setDl] = useState<{ done: number; total: number } | null>(null);
   const [cached, setCached] = useState<number | null>(null);
   const [msg, setMsg] = useState("");
@@ -27,21 +33,35 @@ export function Settings() {
     setDl(null);
   };
 
-  const save = () => {
-    const blob = new Blob([exportProgress()], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `gre-vocab-progress-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  const save = async () => {
+    await saveBackup(exportProgress(), `shobdo-quest-backup-${today()}.json`);
+    updateSettings({ lastBackup: today() });
+    setMsg("Backup saved.");
+  };
+
+  const changeReminder = async (time: string) => {
+    const ok = await setDailyReminder(time).catch(() => false);
+    if (time && !ok) setMsg("Notifications are blocked. Allow them for Shobdo Quest in Android settings.");
+    else updateSettings({ reminder: time });
   };
 
   return (
     <div className="page settings">
-      <h1>Settings</h1>
+      <h1>{t("Settings")}</h1>
 
       <section className="panel">
         <h2>Study</h2>
+        <label className="field row">
+          <span>{t("Language")}</span>
+          <select value={settings.lang} onChange={(e) => updateSettings({ lang: e.target.value as "en" | "bn" })}>
+            <option value="en">English</option>
+            <option value="bn">বাংলা</option>
+          </select>
+        </label>
+        <label className="field row">
+          <span>GRE test date</span>
+          <input type="date" value={settings.testDate} min={today()} onChange={(e) => updateSettings({ testDate: e.target.value })} />
+        </label>
         <label className="field row">
           <span>New words per day (goal)</span>
           <input
@@ -102,6 +122,23 @@ export function Settings() {
         </label>
       </section>
 
+      {isNative && (
+        <section className="panel">
+          <h2>Daily reminder</h2>
+          <label className="field row">
+            <span>Remind me to study</span>
+            <select value={settings.reminder} onChange={(e) => changeReminder(e.target.value)}>
+              <option value="">Off</option>
+              {["07:00", "09:00", "13:00", "18:00", "20:00", "22:00"].map((h) => (
+                <option key={h} value={h}>
+                  every day at {h}
+                </option>
+              ))}
+            </select>
+          </label>
+        </section>
+      )}
+
       <section className="panel">
         <h2>Offline audio</h2>
         <p className="muted small">
@@ -127,14 +164,15 @@ export function Settings() {
       <section className="panel">
         <h2>Your data</h2>
         <p className="muted small">
-          Progress is saved in this browser only. Export a backup to move it to another device or browser.
+          Progress is saved on this device only. Export a backup to keep it safe or move it to another device.{" "}
+          {settings.lastBackup ? `Last backup: ${settings.lastBackup}.` : "No backup yet."}
         </p>
         <div className="actions-row">
           <button className="btn" onClick={save}>
-            Export progress
+            Back up progress
           </button>
           <button className="btn" onClick={() => fileRef.current?.click()}>
-            Import progress
+            Restore a backup
           </button>
           <button
             className="btn danger"
@@ -162,6 +200,20 @@ export function Settings() {
             e.target.value = "";
           }}
         />
+      </section>
+      <section className="panel">
+        <h2>{t("About")}</h2>
+        <p className="muted small">
+          {APP_NAME} {VERSION}. {TRADEMARK}
+        </p>
+        <div className="actions-row">
+          <button className="btn" onClick={() => go("/about")}>
+            <Icon name="bulb" /> {t("About")} {APP_NAME}
+          </button>
+          <button className="btn ghost" onClick={() => go("/privacy")}>
+            {t("Privacy policy")}
+          </button>
+        </div>
       </section>
     </div>
   );

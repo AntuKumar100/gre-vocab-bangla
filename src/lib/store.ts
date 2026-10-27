@@ -22,6 +22,20 @@ export interface Settings {
   effects: boolean;
   /** Daily XP goal shown as the ring on Home. */
   xpGoal: number;
+  /** Interface language; word content is always English with Bangla meanings. */
+  lang: "en" | "bn";
+  /** Finished the first-run welcome. */
+  onboarded: boolean;
+  /** GRE test date (YYYY-MM-DD), for the countdown and the daily plan. */
+  testDate: string;
+  /** First set suggested by the level check. */
+  startSet: number;
+  /** Daily reminder in the Android app ("HH:MM"), empty when off. */
+  reminder: string;
+  /** Last time progress was exported (YYYY-MM-DD). */
+  lastBackup: string;
+  /** Last time the backup nudge was dismissed (YYYY-MM-DD). */
+  backupNudged: string;
 }
 
 export interface DayLog {
@@ -53,6 +67,13 @@ const DEFAULT_SETTINGS: Settings = {
   sounds: true,
   effects: true,
   xpGoal: 150,
+  lang: "en",
+  onboarded: false,
+  testDate: "",
+  startSet: 1,
+  reminder: "",
+  lastBackup: "",
+  backupNudged: "",
 };
 const EMPTY_DAY: DayLog = { reviews: 0, correct: 0, learned: 0, quiz: 0, quizCorrect: 0, xp: 0 };
 
@@ -77,16 +98,26 @@ function load(): Progress {
   }
 }
 
+/** Ids used to carry a set prefix ("01-abound"); they are now the word alone ("abound"). */
+const legacyId = (id: string) => id.replace(/^\d{2}-/, "");
+
 function parse(raw: string): Progress {
   const p = JSON.parse(raw) as Partial<Progress>;
   const cards: Record<string, Card> = {};
-  for (const [id, c] of Object.entries(p.cards ?? {})) cards[id] = reviveCard(c);
+  for (const [id, c] of Object.entries(p.cards ?? {})) {
+    const card = reviveCard(c);
+    const key = legacyId(id);
+    // A word that sat in two old groups keeps whichever card is further along.
+    if (!cards[key] || card.reps > cards[key].reps) cards[key] = card;
+  }
+  const misses: Record<string, number> = {};
+  for (const [id, n] of Object.entries(p.misses ?? {})) misses[legacyId(id)] = (misses[legacyId(id)] ?? 0) + n;
   return {
     cards,
-    misses: p.misses ?? {},
-    starred: p.starred ?? [],
+    misses,
+    starred: [...new Set((p.starred ?? []).map(legacyId))],
     days: p.days ?? {},
-    settings: { ...DEFAULT_SETTINGS, ...p.settings },
+    settings: { ...DEFAULT_SETTINGS, onboarded: Object.keys(cards).length > 0, ...p.settings },
     xp: p.xp ?? 0,
     bestCombo: p.bestCombo ?? 0,
   };

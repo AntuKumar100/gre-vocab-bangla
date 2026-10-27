@@ -9,11 +9,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered in main.tsx, and only on the website.
+      injectRegister: false,
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
-        name: "Shobdo Quest: GRE words in Bangla",
+        name: "Shobdo Quest: GRE® vocabulary in Bangla",
         short_name: "Shobdo Quest",
-        description: "GregMAT GRE words with Bangla meanings, narrated stories, GRE-style questions and spaced repetition",
+        description: "1,110 GRE® words with Bangla meanings, narrated stories, GRE-style questions and spaced repetition",
         theme_color: "#7c3aed",
         background_color: "#faf7ff",
         display: "standalone",
@@ -26,7 +28,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,json}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,json,woff2}"],
         globIgnores: ["audio/**"],
         runtimeCaching: [
           {
@@ -38,11 +40,6 @@ export default defineConfig({
               rangeRequests: true,
               cacheableResponse: { statuses: [200] },
             },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,
-            handler: "StaleWhileRevalidate",
-            options: { cacheName: "fonts", cacheableResponse: { statuses: [0, 200] } },
           },
         ],
       },

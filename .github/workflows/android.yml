@@ -1,0 +1,74 @@
+name: Android app
+
+# Builds the Android app from the website build. Every run publishes an installable
+# APK to the "android-latest" release; with signing secrets set it also builds the
+# signed App Bundle (.aab) for Google Play.
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'public/**', 'content/**', 'android/**', 'capacitor.config.ts', 'package*.json', 'index.html', 'vite.config.ts']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 2.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Build
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          if [ -n "$ANDROID_KEYSTORE_PATH" ]; then ./gradlew --no-daemon bundleRelease; fi
+          mkdir -p ../out
+          cp app/build/outputs/apk/debug/app-debug.apk ../out/shobdo-quest.apk
+          if [ -f app/build/outputs/bundle/release/app-release.aab ]; then cp app/build/outputs/bundle/release/app-release.aab ../out/shobdo-quest.aab; fi
+          ls -la ../out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ github.run_number }}
+          path: out/
+          retention-days: 14
+      - name: Publish the APK for direct install
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Android app (latest build)
+          prerelease: true
+          make_latest: false
+          body: |
+            Install on an Android phone: download shobdo-quest.apk below, open it, and allow installs from this source when Android asks.
+            Built from ${{ github.sha }} (build ${{ github.run_number }}).
+          files: out/shobdo-quest.apk

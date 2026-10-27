@@ -3,6 +3,7 @@ import { Icon } from "../components/Icon";
 import { WordDetail } from "../components/WordDetail";
 import { playStory, stopStory, toggleStory } from "../lib/audio";
 import { useApp } from "../lib/context";
+import { useT } from "../lib/i18n";
 import { celebrate, sfx } from "../lib/fx";
 import { go } from "../lib/router";
 import { getProgress, grade, Rating, useProgress, type Grade } from "../lib/store";
@@ -14,6 +15,7 @@ import { getProgress, grade, Rating, useProgress, type Grade } from "../lib/stor
 export function Learn({ group }: { group: number }) {
   const { index } = useApp();
   const { settings } = useProgress();
+  const t = useT();
   const words = index.byGroup.get(group) ?? [];
   // Fix the session list on entry so grading doesn't reshuffle it.
   const session = useMemo(() => {
@@ -74,7 +76,7 @@ export function Learn({ group }: { group: number }) {
           <div className="done-icon">
             <Icon name="trophy" size={44} />
           </div>
-          <h1>{session.browsing ? "Group reviewed" : `Group ${group}: ${session.list.length} words learned`}</h1>
+          <h1>{session.browsing ? t("Set reviewed") : t("Set {g}: {n} words learned", { g: group, n: session.list.length })}</h1>
           {!session.browsing && (
             <p className="muted">
               {again > 0
@@ -85,10 +87,10 @@ export function Learn({ group }: { group: number }) {
           )}
           <div className="actions-row center">
             <button className="btn primary" onClick={() => go(`/quiz/ids/${ids.join(",")}`)}>
-              <Icon name="quiz" /> Quiz these words
+              <Icon name="target" /> {t("Practice these words")}
             </button>
             <button className="btn" onClick={() => go(`/group/${group}`)}>
-              Back to group
+              {t("Back to the set")}
             </button>
           </div>
         </div>
@@ -116,22 +118,22 @@ export function Learn({ group }: { group: number }) {
         {session.browsing ? (
           <>
             <button className="btn" disabled={i === 0} onClick={() => setI(i - 1)}>
-              <Icon name="arrowLeft" /> Previous
+              <Icon name="arrowLeft" /> {t("Previous")}
             </button>
             <button className="btn primary" onClick={() => setI(i + 1)}>
-              Next <Icon name="arrowRight" />
+              {t("Next")} <Icon name="arrowRight" />
             </button>
           </>
         ) : (
           <>
             <button className="btn rate again" onClick={() => answer(Rating.Again)}>
-              Need practice <kbd>1</kbd>
+              {t("Need practice")} <kbd>1</kbd>
             </button>
             <button className="btn rate good" onClick={() => answer(Rating.Good)}>
-              Got it <kbd>2</kbd>
+              {t("Got it")} <kbd>2</kbd>
             </button>
             <button className="btn rate easy" onClick={() => answer(Rating.Easy)}>
-              Already knew it <kbd>3</kbd>
+              {t("Already knew it")} <kbd>3</kbd>
             </button>
           </>
         )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { celebrate, sfx } from "../lib/fx";
+import { useT } from "../lib/i18n";
 import { levelTitle, onXp } from "../lib/store";
 import { Icon } from "./Icon";
 
@@ -9,9 +10,10 @@ interface Float {
 }
 
 /** Floating "+XP" pops by the header chip and the level-up celebration. */
-export function GameLayer() {
+export function GameLayer({ routeKey }: { routeKey: string }) {
   const [floats, setFloats] = useState<Float[]>([]);
   const [levelUp, setLevelUp] = useState<number | null>(null);
+  const t = useT();
 
   useEffect(
     () =>
@@ -31,6 +33,9 @@ export function GameLayer() {
       }),
     [],
   );
+
+  // Moving to another screen closes the celebration.
+  useEffect(() => setLevelUp(null), [routeKey]);
 
   useEffect(() => {
     if (levelUp === null) return;
@@ -54,8 +59,8 @@ export function GameLayer() {
               <Icon name="crown" size={34} />
               <span>{levelUp}</span>
             </div>
-            <strong>Level up!</strong>
-            <span>You are now a {levelTitle(levelUp)}</span>
+            <strong>{t("Level up!")}</strong>
+            <span>{t("You are now a {title}", { title: t(levelTitle(levelUp)) })}</span>
           </div>
         </div>
       )}

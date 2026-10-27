@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon for reminders: the logo's parrot head and sound wave, in white. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M8.5,32a14.5,14.5 0,1 1,29 0a14.5,14.5 0,1 1,-29 0zM13,22C11,16 15,12 20,14C18,16 18,19 19,21ZM32.5,23.5C40,22.5 45.5,28 44.5,35.5C44,39 41.5,40.5 40,39.2C40.6,35.5 39,32.6 34,33ZM26.5,26.5a3.7,3.7 0,1 0,0.01 0z" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M49,22Q53,28 49,34M54,18Q60.5,28 54,38" />
+</vector>

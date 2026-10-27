@@ -1,6 +1,6 @@
 """Generate story narration MP3s with the Kokoro open-source TTS model.
 
-Reads content/groups/*.json and writes public/audio/<id>.mp3 for every entry
+Reads content/sets/*.json and writes public/audio/<word>.mp3 for every entry
 whose audio is missing or whose story text changed (tracked in
 content/audio-manifest.json).
 
@@ -25,14 +25,13 @@ import soundfile as sf
 from kokoro_onnx import Kokoro
 
 ROOT = Path(__file__).resolve().parent.parent
-GROUPS = ROOT / "content" / "groups"
+SETS = ROOT / "content" / "sets"
 AUDIO = ROOT / "public" / "audio"
 MANIFEST = ROOT / "content" / "audio-manifest.json"
 
 
-def entry_id(group, word):
-    # Group-prefixed so a word listed in two groups gets two files.
-    return f"{group:02d}-" + re.sub(r"[^a-z0-9]+", "-", word.lower()).strip("-")
+def entry_id(word):
+    return re.sub(r"[^a-z0-9]+", "-", word.lower()).strip("-")
 
 
 def narration(entry):
@@ -79,11 +78,11 @@ def main():
     AUDIO.mkdir(parents=True, exist_ok=True)
     manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
     todo = []
-    for f in sorted(GROUPS.glob("*.json")):
+    for f in sorted(SETS.glob("*.json")):
         for e in json.loads(f.read_text(encoding="utf-8")):
             if args.rewritten_only and "gre" not in e:
                 continue
-            eid = entry_id(int(f.stem), e["word"])
+            eid = entry_id(e["word"])
             text = narration(e)
             fix = PRONUNCIATION.get(e["word"])
             key_src = f"{args.voice}|{args.speed}|{args.sentence_pause}|{args.clause_pause}|{text}" + (f"|{fix}" if fix else "")

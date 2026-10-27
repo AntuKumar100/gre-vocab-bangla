@@ -3,6 +3,7 @@ import { Icon } from "../components/Icon";
 import { Meanings, WordBody, WordHeader } from "../components/WordDetail";
 import { playStory, speak, stopStory, toggleStory } from "../lib/audio";
 import { useApp } from "../lib/context";
+import { useT } from "../lib/i18n";
 import { celebrate, sfx } from "../lib/fx";
 import { go } from "../lib/router";
 import { dueIds, getProgress, grade, previewIntervals, Rating, useProgress, type Grade } from "../lib/store";
@@ -18,6 +19,7 @@ const RATINGS: { r: Grade; label: string; cls: string }[] = [
 export function Review() {
   const { index } = useApp();
   const { settings } = useProgress();
+  const t = useT();
   const [queue, setQueue] = useState<string[]>(() => dueIds());
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(0);
@@ -132,7 +134,7 @@ export function Review() {
           </div>
         ) : (
           <button className="btn primary reveal" onClick={reveal}>
-            Show answer <kbd>Space</kbd>
+            {t("Show answer")} <kbd>Space</kbd>
           </button>
         )}
       </article>
@@ -141,7 +143,7 @@ export function Review() {
         <div className="answer-bar four">
           {RATINGS.map(({ r, label, cls }) => (
             <button key={r} className={`btn rate ${cls}`} onClick={() => answer(r)}>
-              <span>{label}</span>
+              <span>{t(label)}</span>
               <span className="interval">{intervals[r]}</span>
               <kbd>{r}</kbd>
             </button>

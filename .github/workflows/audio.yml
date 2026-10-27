@@ -5,7 +5,7 @@ name: Generate audio
 on:
   push:
     branches: [main]
-    paths: ['content/groups/**', 'scripts/gen_audio.py', '.github/workflows/audio.yml']
+    paths: ['content/sets/**', 'scripts/gen_audio.py', '.github/workflows/audio.yml']
   workflow_dispatch:
 
 permissions:
