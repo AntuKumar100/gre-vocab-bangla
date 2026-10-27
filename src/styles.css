@@ -360,15 +360,20 @@ mark {
   }
 }
 
-@keyframes twinkle {
+@keyframes speak {
   0%,
+  55%,
   100% {
-    transform: scale(1) rotate(0);
     opacity: 1;
   }
-  50% {
-    transform: scale(0.6) rotate(45deg);
-    opacity: 0.6;
+  70% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes nod {
+  40% {
+    rotate: -8deg;
   }
 }
 
@@ -454,14 +459,31 @@ mark {
   padding: 0;
 }
 
+.logo-mark {
+  flex: none;
+  border-radius: 28%;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 4px 12px rgb(124 58 237 / 0.3);
+}
+
 .brand:hover .logo-mark {
   animation: bounceIn 0.5s var(--bounce);
 }
 
-.logo-twinkle {
+/* The parrot's sound waves pulse outwards, as if it is speaking. */
+.logo-wave {
+  animation: speak 2.4s ease-in-out infinite;
+}
+
+.logo-wave.w2 {
+  animation-delay: 0.25s;
+}
+
+.brand:hover .logo-parrot {
   transform-box: fill-box;
-  transform-origin: center;
-  animation: twinkle 2.4s ease-in-out infinite;
+  transform-origin: 50% 80%;
+  animation: nod 0.6s var(--bounce);
 }
 
 .wordmark {
