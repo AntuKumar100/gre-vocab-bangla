@@ -1,7 +1,8 @@
 name: Voice pilot
 
 # Narrates a batch of stories with the expressive voice (scripts/gen_audio_v2.py)
-# and uploads the MP3s as an artifact for listening. Nothing is committed.
+# and publishes the MP3s to the "voice-pilot" pre-release for listening.
+# Nothing is committed and the app is not changed.
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +11,7 @@ on:
         default: pilot/01.json
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   narrate:
@@ -18,7 +19,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       matrix:
-        shard: [0, 1, 2, 3, 4]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,9 +34,27 @@ jobs:
         with:
           path: ~/.cache/huggingface
           key: chatterbox-turbo-v1
-      - run: python scripts/gen_audio_v2.py "${{ inputs.stories }}" out --shard ${{ matrix.shard }}/5
+      - run: python scripts/gen_audio_v2.py "${{ inputs.stories }}" out --shard ${{ matrix.shard }}/10
       - uses: actions/upload-artifact@v4
         with:
           name: voice-pilot-${{ matrix.shard }}
           path: out/
           retention-days: 7
+
+  publish:
+    needs: narrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: voice-pilot-*
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: voice-pilot
+          name: Voice pilot (listening test)
+          prerelease: true
+          make_latest: false
+          body: Expressive narration trial for ${{ inputs.stories }}. Not used by the app.
+          files: out/*.mp3
