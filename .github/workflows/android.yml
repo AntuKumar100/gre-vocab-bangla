@@ -8,6 +8,10 @@ on:
     branches: [main]
     paths: ['src/**', 'public/**', 'content/**', 'android/**', 'capacitor.config.ts', 'package*.json', 'index.html', 'vite.config.ts', '.github/workflows/android.yml']
   workflow_dispatch:
+  # Commits made by the audio workflow don't trigger push events; rebuild after it so the app has the new audio.
+  workflow_run:
+    workflows: [Generate audio]
+    types: [completed]
 
 permissions:
   contents: write
@@ -24,6 +28,8 @@ jobs:
       VERSION_NAME: 2.0.${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22

@@ -35,18 +35,24 @@ def entry_id(word):
 
 
 def narration(entry):
-    return f"{entry['word'].capitalize()}. {entry['story']}"
+    # Stories open with the headword ("Abound. Every June..."), so read them as written.
+    story = entry["story"]
+    if story.lower().startswith(entry["word"].lower() + "."):
+        return story
+    return f"{entry['word'].capitalize()}. {story}"
 
 
 # Headwords whose GRE sense is pronounced differently from espeak's default
-# reading: (default IPA, correct IPA, how many occurrences to fix; None = all).
+# reading: (default IPA, correct IPA, which occurrences to fix; None = all).
+# Occurrences are counted in the story's phonemes; the ones left out are the
+# everyday sense the story contrasts with ("the minute on a clock").
 PRONUNCIATION = {
-    "minute": ("mˈɪnɪt", "maɪnˈuːt", None),
+    "minute": ("mˈɪnɪt", "maɪnˈuːt", (0, 1, 2, 3, 5)),
     "content": ("kˈɑːntɛnt", "kəntˈɛnt", None),
     "august": ("ˈɔːɡəst", "ɔːɡˈʌst", None),
-    "intimate": ("ˈɪntᵻmət", "ˈɪntᵻmˌeɪt", 2),  # the story's last uses are the adjective
-    "compound": ("kˈɑːmpaʊnd", "kəmpˈaʊnd", None),
-    "discount": ("dˈɪskaʊnt", "dɪskˈaʊnt", None),
+    "intimate": ("ˈɪntᵻmət", "ˈɪntᵻmˌeɪt", (0, 1)),  # the later uses are the adjective
+    "compound": ("kˈɑːmpaʊnd", "kəmpˈaʊnd", (0,)),  # "compound interest" keeps COM-pound
+    "discount": ("dˈɪskaʊnt", "dɪskˈaʊnt", (0, 2, 3)),  # "a discount" (noun) keeps DIS-count
 }
 
 
@@ -54,11 +60,15 @@ def phonemes_for(kokoro, entry, text):
     fix = PRONUNCIATION.get(entry["word"])
     if not fix:
         return None
-    wrong, right, count = fix
+    wrong, right, which = fix
     ipa = kokoro.tokenizer.phonemize(text, "en-us")
-    if wrong not in ipa:
+    parts = ipa.split(wrong)
+    if len(parts) == 1:
         raise SystemExit(f"{entry['word']}: expected {wrong} in phonemes, got {ipa[:80]}")
-    return ipa.replace(wrong, right, -1 if count is None else count)
+    out = parts[0]
+    for n, part in enumerate(parts[1:]):
+        out += (right if which is None or n in which else wrong) + part
+    return out
 
 
 def main():
