@@ -1,0 +1,41 @@
+name: Voice pilot
+
+# Narrates a batch of stories with the expressive voice (scripts/gen_audio_v2.py)
+# and uploads the MP3s as an artifact for listening. Nothing is committed.
+on:
+  workflow_dispatch:
+    inputs:
+      stories:
+        description: JSON file of {word, story} to narrate
+        default: pilot/01.json
+
+permissions:
+  contents: read
+
+jobs:
+  narrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      matrix:
+        shard: [0, 1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Install the CPU build of PyTorch, then Chatterbox
+        run: |
+          pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install chatterbox-tts==0.1.7
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: chatterbox-turbo-v1
+      - run: python scripts/gen_audio_v2.py "${{ inputs.stories }}" out --shard ${{ matrix.shard }}/5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voice-pilot-${{ matrix.shard }}
+          path: out/
+          retention-days: 7
