@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const setsDir = join(root, "content/sets");
 
+// Expression tags such as [laugh] are for the narrating voice only; readers see plain text.
+const forReading = (story) => story.replace(/\s*\[(laugh|chuckle|sigh|gasp)\]\s*/g, " ").replace(/ +([,.;:!?])/g, "$1").replace(/ {2,}/g, " ").trim();
+
 // One id per headword; the narration file is named after it.
 const wordId = (word) => word.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -23,7 +26,7 @@ for (const file of readdirSync(setsDir).filter((f) => f.endsWith(".json")).sort(
       en: w.en,
       bn: w.bn,
       hook: w.hook,
-      story: w.story,
+      story: forReading(w.story),
       synonyms: w.synonyms ?? [],
       example: w.example ?? "",
       ...(w.gre && { gre: w.gre }),
