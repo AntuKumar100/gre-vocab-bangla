@@ -1,4 +1,4 @@
-"""Check content/sets/*.json: every field filled, GRE items well formed, no duplicate words."""
+"""Check content/sets/*.json: every field filled, GRE items and stories well formed, no duplicate words."""
 import json
 import re
 from pathlib import Path
@@ -24,6 +24,11 @@ for path in sorted((ROOT / "content" / "sets").glob("*.json")):
         if g["s"].count("____") != 1 or g["clue"] not in g["s"] or re.search(r"[A-Za-z]____|____[A-Za-z]", g["s"]):
             problems += 1
             print(f"{where}: malformed GRE item")
+        story = e["story"]
+        tags = set(re.findall(r"\[([a-z]+)\]", story))
+        if story.count("...") != 1 or not tags <= {"laugh", "chuckle", "sigh", "gasp"}:
+            problems += 1
+            print(f"{where}: story needs one self-test pause and only known expression tags")
         audio = ROOT / "public" / "audio" / (re.sub(r"[^a-z0-9]+", "-", e["word"].lower()).strip("-") + ".mp3")
         if not audio.exists():
             problems += 1
