@@ -3,7 +3,7 @@ import { LogoMark } from "../components/Logo";
 import { APP_NAME, MAKER, PRIVACY_URL, REPO_URL, reportUrl, TRADEMARK, VERSION } from "../lib/brand";
 import { useApp } from "../lib/context";
 import { useT } from "../lib/i18n";
-import { go } from "../lib/router";
+import { go, goBack } from "../lib/router";
 
 const CREDITS: [string, string, string][] = [
   ["Kokoro", "narration voice model", "Apache 2.0"],
@@ -21,7 +21,7 @@ export function About() {
   return (
     <div className="page about">
       <div className="page-head">
-        <button className="icon-btn" onClick={() => go("/settings")} aria-label={t("Settings")}>
+        <button className="icon-btn" onClick={() => goBack("/settings")} aria-label={t("Settings")}>
           <Icon name="arrowLeft" />
         </button>
         <h1>{t("About")}</h1>
@@ -93,7 +93,7 @@ export function Privacy() {
   return (
     <div className="page about">
       <div className="page-head">
-        <button className="icon-btn" onClick={() => go("/about")} aria-label={t("About")}>
+        <button className="icon-btn" onClick={() => goBack("/about")} aria-label={t("About")}>
           <Icon name="arrowLeft" />
         </button>
         <h1>{t("Privacy policy")}</h1>

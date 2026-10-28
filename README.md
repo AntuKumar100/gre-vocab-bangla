@@ -5,8 +5,9 @@ Every word has:
 
 - a clear **English meaning** and a **Bangla meaning (বাংলা অর্থ)**
 - a **memory hook**: a sound-alike or word-root trick
-- a short **story** (about 75 words) set in Bangladeshi life or on the GRE, with the word highlighted
-- **narrated audio of the story** in a warm, slow female voice (open-source Kokoro model)
+- a short **story** (70–100 words) set in Bangladeshi life, ending with a self-test question
+- **narrated audio of the story** in an expressive voice that laughs, sighs and gasps where the scene calls for it
+- a recorded **pronunciation** of the word
 - a **GRE-style sentence** with a blank, a synonym pair, a trap answer and the clue phrase
 - synonyms and an example sentence
 
@@ -57,7 +58,7 @@ subfolder because all paths are relative.
 ### Use it on your phone
 
 Open the live link in Chrome (Android) or Safari (iPhone), then choose **Add to Home Screen**.
-In **Settings → Offline audio**, tap **Download all story audio** once (about 92 MB) to listen
+In **Settings → Offline audio**, tap **Download all story audio** once (about 175 MB) to listen
 without internet. On a set's page, **Listen to all stories** plays the whole set back to back,
 which is handy on a bus.
 
@@ -72,15 +73,20 @@ to another device.
 
 ## How the audio is made and checked
 
-Narration uses Kokoro's `af_heart` voice at 0.82× speed with longer pauses between sentences.
-`.github/workflows/audio.yml` regenerates every story whose text changed, split across 20
-parallel GitHub runners, then commits the MP3s and redeploys the site.
+Stories are narrated by Chatterbox Turbo (MIT licence) on CPU, in a voice cloned from
+`voice/reference.wav`, a clip of Kokoro's synthetic `af_heart` voice. Stories may contain the tags
+`[laugh]`, `[chuckle]`, `[sigh]` and `[gasp]`, which the voice performs and the app hides, and one
+`...` that becomes a 1.8-second pause for the self-test. `.github/workflows/audio.yml` regenerates
+every story whose text changed (tracked in `content/audio-manifest.json`), split across 20 parallel
+GitHub runners, then commits the MP3s and redeploys the site and the Android app.
 
-An earlier version of the stories was narrated by the same model, and a sample of 150 files was transcribed with
-Whisper to confirm nothing is cut off (median 96% word match; the gaps are mostly the recogniser
-misspelling names like Tanvir). Headwords whose GRE meaning changes how they are said
-(*minute* = my-NOOT, *content*, *august*, *intimate* as a verb, *compound* and *discount* as verbs)
-have pronunciation overrides in `scripts/gen_audio.py`.
+A sample of the narrations was transcribed with Whisper to confirm nothing is cut off
+(median 95% word match; the gaps are mostly names like Tanvir).
+
+The pronounce button plays `public/audio/say/<word>.mp3`, recorded with Kokoro `af_heart` by
+`scripts/gen_words.py`. Headwords whose GRE meaning changes how they are said (*minute* = my-NOOT,
+*content*, *august*, *intimate* as a verb, *compound* and *discount* as verbs) have pronunciation
+overrides there.
 
 ## Project layout
 
@@ -88,8 +94,10 @@ have pronunciation overrides in `scripts/gen_audio.py`.
 content/sets/NN.json       everything about the 30 words in set NN: meanings, Bangla, hook, story,
                            synonyms, example and GRE item
 content/audio-manifest.json which story text each MP3 was generated from
-public/audio/NN-word.mp3   narrated stories
-scripts/gen_audio.py       generates missing or changed story audio
+public/audio/<word>.mp3    narrated stories
+public/audio/say/<word>.mp3 pronunciation of each headword
+scripts/gen_audio_v2.py    narrates missing or changed stories (Chatterbox)
+scripts/gen_words.py       records missing or changed pronunciations (Kokoro)
 scripts/apply_rewrite.py   validates and merges a batch of new stories and GRE items into a set
 scripts/apply_extras.py    validates and merges synonyms, examples and definitions into a set
 scripts/check_content.py   checks every word has every field, a valid GRE item and its audio
@@ -103,15 +111,22 @@ src/                       the React app
 ### Edit a word or story
 
 Change the entry in `content/sets/NN.json` and push: the audio workflow narrates it again.
-To do it locally instead:
+To do it locally instead (slow on CPU, about a minute per story):
 
 ```
-pip install kokoro-onnx soundfile
-python scripts/gen_audio.py <folder with kokoro-v1.0.onnx and voices-v1.0.bin>
+pip install chatterbox-tts
+python scripts/gen_audio_v2.py sets
 ```
 
 The script only regenerates stories whose text changed. It needs `ffmpeg` on your PATH.
-Download the model files from
+For a new headword, also record its pronunciation:
+
+```
+pip install kokoro-onnx soundfile
+python scripts/gen_words.py <folder with kokoro-v1.0.onnx and voices-v1.0.bin>
+```
+
+Download the Kokoro model files from
 https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0.
 
 ## Where the content comes from

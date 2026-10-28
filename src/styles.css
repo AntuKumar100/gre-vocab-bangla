@@ -53,6 +53,10 @@
   --font-display: "Baloo Da 2", "Nunito", system-ui, sans-serif;
   --font-bn: "Hind Siliguri", "Baloo Da 2", "Noto Sans Bengali", "Nirmala UI", sans-serif;
   --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Space taken by the phone's status bar and gesture bar. The Android app
+     injects --safe-area-inset-*; browsers report env(). */
+  --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -145,6 +149,62 @@
   --seq-6: #c4b5fd;
 }
 
+/* Night: pure black with warm amber accents, gentle on the eyes in a dark room. */
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-glow-1: rgb(180 83 9 / 0.1);
+  --bg-glow-2: rgb(190 18 60 / 0.06);
+  --surface: #120e0a;
+  --surface-2: #1b1510;
+  --border: #2a2119;
+  --border-strong: #3b2f23;
+  --text: #f3e8da;
+  --text-2: #d8c7b1;
+  --muted: #a6927a;
+  --accent: #f0a35e;
+  --accent-2: #f08a7e;
+  --accent-3: #f5b85a;
+  --accent-ink: #ffffff;
+  --accent-soft: #2a1c10;
+  --accent-dark: #8a3c0c;
+  --grad: linear-gradient(135deg, #d97706 0%, #ea580c 50%, #e11d48 100%);
+  --grad-soft: linear-gradient(135deg, #1d140c, #22110e 60%, #1d150a);
+  --mark: #4a3010;
+  --gold: #fbbf24;
+  --gold-soft: #2e220a;
+  --good: #4ade80;
+  --good-dark: #15803d;
+  --good-soft: #0d2416;
+  --bad: #fb7185;
+  --bad-dark: #9f1239;
+  --bad-soft: #331018;
+  --warn: #fbbf24;
+  --shadow: 0 2px 4px rgb(0 0 0 / 0.4), 0 10px 30px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 18px 50px rgb(0 0 0 / 0.7);
+  --scrim: rgb(0 0 0 / 0.65);
+  --stage-new: #2a2119;
+  --stage-learning: #7c4a1a;
+  --stage-young: #d97706;
+  --stage-mastered: #fcd34d;
+  --seq-0: #17120d;
+  --seq-1: #3a2410;
+  --seq-2: #5c3510;
+  --seq-3: #8a4b0f;
+  --seq-4: #b45309;
+  --seq-5: #d97706;
+  --seq-6: #fbbf24;
+}
+
+/* Reading size, chosen in Settings; the layout is sized in rem so it all scales together. */
+:root[data-text="large"] {
+  font-size: 112.5%;
+}
+
+:root[data-text="larger"] {
+  font-size: 125%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -163,7 +223,7 @@ body {
   background-attachment: fixed;
   color: var(--text);
   font-family: var(--font);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -443,7 +503,7 @@ mark {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 24px;
+  padding: calc(10px + var(--sat)) 24px 10px;
   background: color-mix(in srgb, var(--surface) 82%, transparent);
   backdrop-filter: blur(14px) saturate(1.4);
   border-bottom: 2px solid var(--border);
@@ -1878,6 +1938,54 @@ main.session {
   transform: scale(0.92);
 }
 
+.player .icon-btn.small {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+
+.player .icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.self-test-reveal {
+  display: inline;
+  padding: 1px 10px;
+  border-radius: 999px;
+  border: 2px dashed color-mix(in srgb, var(--accent) 50%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.self-test-answer {
+  animation: popIn 0.4s var(--bounce);
+  display: inline-block;
+}
+
+.rate-btn {
+  flex: none;
+  min-width: 52px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.rate-btn:active {
+  transform: scale(0.94);
+}
+
 .player.compact .play-btn {
   width: 36px;
   height: 36px;
@@ -1960,7 +2068,7 @@ main.session {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgb(31 21 53 / 0.5);
+  background: var(--scrim, rgb(31 21 53 / 0.5));
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
@@ -2721,7 +2829,7 @@ mark.clue {
 
 .xp-floats {
   position: fixed;
-  top: 62px;
+  top: calc(62px + var(--sat));
   right: 90px;
   z-index: 40;
   pointer-events: none;
@@ -3187,6 +3295,237 @@ input[type="time"] {
   }
 }
 
+
+/* ---------- Theme menu ---------- */
+
+.theme-menu {
+  position: relative;
+}
+
+.theme-icon {
+  display: inline-grid;
+  animation: spinIn 0.45s var(--bounce);
+}
+
+.theme-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 260px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  transform-origin: top right;
+  animation: menuIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.theme-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme-opt:hover,
+.theme-opt:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+}
+
+.theme-opt[aria-checked="true"] {
+  background: var(--accent-soft);
+}
+
+.theme-opt > svg {
+  color: var(--accent);
+}
+
+/* Each option previews its theme's colours. */
+.theme-swatch {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 2px solid rgb(0 0 0 / 0.08);
+}
+
+.t-light .theme-swatch {
+  background: linear-gradient(135deg, #faf7ff, #ffeedd);
+  color: #ea580c;
+}
+
+.t-dark .theme-swatch {
+  background: linear-gradient(135deg, #1b1430, #2c2050);
+  color: #c4b5fd;
+}
+
+.t-night .theme-swatch {
+  background: #000000;
+  color: #f0a35e;
+  border-color: #2a2119;
+}
+
+.t-system .theme-swatch {
+  background: linear-gradient(135deg, #faf7ff 50%, #1b1430 50%);
+  color: var(--accent);
+}
+
+.theme-text {
+  flex: 1;
+  display: grid;
+  line-height: 1.2;
+}
+
+.theme-text small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-6px);
+  }
+}
+
+@keyframes spinIn {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.6);
+  }
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(40%);
+    opacity: 0;
+  }
+}
+
+/* ---------- Toast ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(84px + var(--sab));
+  z-index: 60;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: var(--shadow-pop);
+  animation: fadeUp 0.25s ease-out;
+  white-space: nowrap;
+}
+
+/* ---------- Page transitions ---------- */
+/* Going deeper slides the new page in from the right; going back slides it in
+   from the left; switching tabs fades. The header and tab bar stay still. */
+
+.topbar {
+  view-transition-name: topbar;
+}
+
+.bottomnav {
+  view-transition-name: tabbar;
+}
+
+::view-transition {
+  background: var(--bg);
+}
+
+::view-transition-old(root) {
+  animation: 0.14s cubic-bezier(0.4, 0, 1, 1) both pageOut;
+}
+
+::view-transition-new(root) {
+  animation: 0.3s cubic-bezier(0, 0, 0.2, 1) 0.06s both pageIn;
+}
+
+html[data-nav="forward"] {
+  --out-x: -36px;
+  --in-x: 48px;
+}
+
+html[data-nav="back"] {
+  --out-x: 36px;
+  --in-x: -48px;
+}
+
+html[data-nav="tab"]::view-transition-old(root) {
+  animation: 0.12s ease-in both fadeOut;
+}
+
+html[data-nav="tab"]::view-transition-new(root) {
+  animation: 0.22s ease-out 0.04s both fadeIn;
+}
+
+::view-transition-group(topbar),
+::view-transition-group(tabbar) {
+  animation-duration: 0.22s;
+}
+
+@keyframes pageOut {
+  to {
+    opacity: 0;
+    transform: translateX(var(--out-x, 0));
+  }
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateX(var(--in-x, 0));
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Browsers without view transitions animate the incoming page alone. */
+html[data-nav="forward"] .route-anim {
+  --in-x: 48px;
+  animation: pageIn 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+html[data-nav="back"] .route-anim {
+  --in-x: -48px;
+  animation: pageIn 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+html[data-nav="tab"] .route-anim {
+  animation: fadeIn 0.22s ease-out;
+}
+
+html.vt .route-anim {
+  animation: none;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 900px) {
@@ -3206,8 +3545,8 @@ input[type="time"] {
     display: none;
   }
   .topbar {
-    padding: 9px 14px;
-    gap: 10px;
+    padding: calc(9px + var(--sat)) 14px 9px;
+    gap: 8px;
   }
   .brand {
     flex: 1;
@@ -3230,7 +3569,7 @@ input[type="time"] {
     right: 0;
     z-index: 20;
     justify-content: space-around;
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    padding: 6px 4px calc(6px + var(--sab));
     background: color-mix(in srgb, var(--surface) 94%, transparent);
     backdrop-filter: blur(14px);
     border-top: 2px solid var(--border);
@@ -3324,7 +3663,7 @@ input[type="time"] {
     gap: 8px;
   }
   .answer-bar {
-    bottom: calc(60px + env(safe-area-inset-bottom));
+    bottom: calc(60px + var(--sab));
   }
   main.session ~ .bottomnav {
     display: none;
@@ -3341,9 +3680,10 @@ input[type="time"] {
     align-items: end;
   }
   .modal {
-    max-height: 92vh;
+    max-height: calc(92vh - var(--sat));
     border-radius: 26px 26px 0 0;
-    padding: 24px 18px;
+    padding: 24px 18px calc(24px + var(--sab));
+    animation: sheetUp 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .field.row {
     flex-direction: column;
@@ -3351,8 +3691,22 @@ input[type="time"] {
     gap: 6px;
   }
   .xp-floats {
-    top: 56px;
+    top: calc(56px + var(--sat));
     right: 70px;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    gap: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .topbar .icon-btn {
+    width: 34px;
+  }
+  .hud-chip {
+    padding: 4px 7px;
   }
 }
 
@@ -3375,5 +3729,14 @@ input[type="time"] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* A separate rule, so browsers without view transitions still read the one above. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
   }
 }

@@ -1,7 +1,7 @@
 // App identity in one place, so the name, maker and links are easy to change.
 export const APP_NAME = "Shobdo Quest";
 export const MAKER = "Antu";
-export const VERSION = "2.0.0";
+export const VERSION = "2.1.0";
 export const REPO_URL = "https://github.com/AntuKumar100/gre-vocab-bangla";
 export const SITE_URL = "https://antukumar100.github.io/gre-vocab-bangla/";
 export const PRIVACY_URL = `${SITE_URL}privacy.html`;

@@ -1,6 +1,8 @@
-import { Fragment } from "react";
-import { seekStory, toggleStory, useStoryPlayer } from "../lib/audio";
+import { Fragment, useState } from "react";
+import { cycleRate, rewindStory, seekStory, toggleStory, useStoryPlayer } from "../lib/audio";
 import { wordPattern } from "../lib/data";
+import { useT } from "../lib/i18n";
+import { useProgress } from "../lib/store";
 import type { Word } from "../lib/types";
 import { Icon } from "./Icon";
 
@@ -14,8 +16,41 @@ export function Highlighted({ text, word }: { text: string; word: string }) {
   );
 }
 
+/**
+ * The story text. Its closing self-test ("So, what do you call...? ... Ad hoc.")
+ * keeps the answer hidden until it is tapped or the narration reaches it.
+ */
+export function StoryText({ w }: { w: Word }) {
+  const [shown, setShown] = useState(false);
+  const { progress } = useStoryPlayer(w);
+  const t = useT();
+  const cut = w.story.lastIndexOf("...");
+  if (cut < 0) return <Highlighted text={w.story} word={w.word} />;
+  const answer = w.story.slice(cut + 3).trim();
+  return (
+    <>
+      <Highlighted text={w.story.slice(0, cut)} word={w.word} />{" "}
+      {shown || progress > 0.95 ? (
+        <mark className="self-test-answer">{answer}</mark>
+      ) : (
+        <button
+          className="self-test-reveal"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShown(true);
+          }}
+        >
+          {t("Tap to see the answer")}
+        </button>
+      )}
+    </>
+  );
+}
+
 export function StoryPlayer({ w, compact = false }: { w: Word; compact?: boolean }) {
   const { playing, progress, error } = useStoryPlayer(w);
+  const rate = useProgress().settings.audioRate;
+  const t = useT();
   if (!w.audio) return compact ? null : <p className="muted small">Audio for this story is not generated yet.</p>;
   return (
     <div className={`player${compact ? " compact" : ""}`}>
@@ -45,6 +80,22 @@ export function StoryPlayer({ w, compact = false }: { w: Word; compact?: boolean
         >
           <div className="fill" style={{ width: `${progress * 100}%` }} />
         </div>
+      )}
+      {!compact && (
+        <>
+          <button className="icon-btn small" onClick={(e) => {
+              e.stopPropagation();
+              rewindStory();
+            }} disabled={!progress} aria-label={t("Back 5 seconds")} title={t("Back 5 seconds")}>
+            <Icon name="replay" size={20} />
+          </button>
+          <button className="rate-btn" onClick={(e) => {
+              e.stopPropagation();
+              cycleRate();
+            }} aria-label={`${t("Story speed")}: ${rate}×`} title={t("Story speed")}>
+            {Number(rate.toFixed(2))}×
+          </button>
+        </>
       )}
       {error && <span className="muted small">Audio unavailable</span>}
     </div>

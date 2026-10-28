@@ -129,3 +129,67 @@ test("old progress ids carry over to the new word ids", async ({ page }) => {
   await page.goto("./#/review");
   await expect(page.locator(".flashcard")).toContainText("abound");
 });
+
+test("theme menu in the header switches Light, Dark, Night and Match phone", async ({ page }) => {
+  const errors = watchErrors(page);
+  await skipWelcome(page);
+  await page.goto("./");
+  const html = page.locator("html");
+  for (const [name, theme] of [
+    ["Dark", "dark"],
+    ["Night", "night"],
+    ["Light", "light"],
+  ]) {
+    await page.getByRole("button", { name: "Theme" }).click();
+    await page.getByRole("menuitemradio", { name: new RegExp(`^${name}`) }).click();
+    await expect(html).toHaveAttribute("data-theme", theme);
+    await expect(page.getByRole("menu")).toBeHidden();
+  }
+  await page.getByRole("button", { name: "Theme" }).click();
+  await page.getByRole("menuitemradio", { name: /^Match phone/ }).click();
+  await expect(html).not.toHaveAttribute("data-theme", /.*/);
+  // The choice is remembered.
+  await page.reload();
+  await page.getByRole("button", { name: "Theme" }).click();
+  await expect(page.getByRole("menuitemradio", { name: /^Match phone/ })).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test("going back returns to the same place on the page", async ({ page }) => {
+  const errors = watchErrors(page);
+  await skipWelcome(page);
+  await page.goto("./#/groups");
+  await page.locator(".quest-node").nth(20).scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => scrollY);
+  expect(before).toBeGreaterThan(500);
+  await page.locator(".quest-node").nth(20).click();
+  await expect(page.getByRole("heading", { name: "Set 21" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  // The page's own back arrow steps back through history, like the phone's Back button.
+  await page.getByRole("button", { name: "Sets" }).first().click();
+  await expect(page).toHaveURL(/#\/groups$/);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(before);
+  expect(errors).toEqual([]);
+});
+
+test("story self-test answer stays hidden until tapped; pronunciation plays a recording", async ({ page }) => {
+  const errors = watchErrors(page);
+  await skipWelcome(page);
+  const clips: string[] = [];
+  page.on("request", (r) => r.url().includes("/audio/say/") && clips.push(r.url()));
+  await page.goto("./#/words");
+  await page.getByRole("button", { name: /^ad hoc/i }).first().click();
+  const story = page.locator(".story p");
+  await expect(story).toContainText("what do you call");
+  await expect(story).not.toContainText("for a single task? Ad hoc");
+  await page.getByRole("button", { name: "Tap to see the answer" }).click();
+  await expect(page.locator(".self-test-answer")).toHaveText("Ad hoc.");
+  await page.getByRole("button", { name: "Pronounce ad hoc" }).click();
+  await expect.poll(() => clips.some((u) => u.endsWith("/audio/say/ad-hoc.mp3"))).toBe(true);
+  // Speed button steps through the narration speeds.
+  await page.getByRole("button", { name: /Story speed: 1×/ }).click();
+  await expect(page.getByRole("button", { name: /Story speed: 1.25×/ })).toBeVisible();
+  expect(errors).toEqual([]);
+});

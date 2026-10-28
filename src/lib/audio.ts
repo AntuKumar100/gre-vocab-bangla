@@ -1,6 +1,6 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { audioUrl } from "./data";
-import { getProgress } from "./store";
+import { useSyncExternalStore } from "react";
+import { audioUrl, sayUrl } from "./data";
+import { getProgress, updateSettings } from "./store";
 import type { Word } from "./types";
 
 // One shared player so starting a story stops whatever was playing.
@@ -95,6 +95,21 @@ export function toggleStory(w: Word) {
   else playStory(w);
 }
 
+/** Jump back a few seconds, to hear a sentence again. */
+export function rewindStory(seconds = 5) {
+  if (player) player.currentTime = Math.max(0, player.currentTime - seconds);
+}
+
+const RATES = [0.75, 1, 1.25, 1.5];
+
+/** Step to the next narration speed; it applies at once and is remembered. */
+export function cycleRate() {
+  const now = getProgress().settings.audioRate;
+  const next = RATES.find((r) => r > now + 0.01) ?? RATES[0];
+  updateSettings({ audioRate: next });
+  if (player) player.playbackRate = next;
+}
+
 export function seekStory(fraction: number) {
   if (player && player.duration) player.currentTime = fraction * player.duration;
 }
@@ -109,8 +124,20 @@ export function usePlayerState() {
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
-/** Pronounce a single word with the browser's speech engine. */
-export function speak(text: string) {
+// Pronunciations play on their own element, so they never interrupt a story's position.
+const sayer = typeof Audio !== "undefined" ? new Audio() : null;
+
+/** Pronounce a headword: the recorded clip, or the browser's speech engine if there is none. */
+export function speak(w: Word) {
+  if (sayer && w.say) {
+    sayer.src = sayUrl(w);
+    sayer.play().catch(() => speakWithBrowser(w.word));
+    return;
+  }
+  speakWithBrowser(w.word);
+}
+
+function speakWithBrowser(text: string) {
   if (typeof speechSynthesis === "undefined") return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -121,12 +148,6 @@ export function speak(text: string) {
   speechSynthesis.speak(u);
 }
 
-export function useSpeechAvailable() {
-  const [ok, setOk] = useState(false);
-  useEffect(() => setOk(typeof speechSynthesis !== "undefined"), []);
-  return ok;
-}
-
 const AUDIO_CACHE = "story-audio";
 
 /** Save every story MP3 into the offline cache the service worker reads from. */
@@ -135,13 +156,16 @@ export async function downloadAllAudio(words: Word[], onProgress: (done: number,
   const list = words.filter((w) => w.audio);
   let done = 0;
   const queue = list.slice();
+  const save = async (path: string) => {
+    const url = new URL(path, location.href).href;
+    if (await cache.match(url)) return;
+    const res = await fetch(url);
+    if (res.ok) await cache.put(url, res);
+  };
   async function worker() {
     for (let w = queue.shift(); w; w = queue.shift()) {
-      const url = new URL(audioUrl(w), location.href).href;
-      if (!(await cache.match(url))) {
-        const res = await fetch(url);
-        if (res.ok) await cache.put(url, res);
-      }
+      await save(audioUrl(w));
+      if (w.say) await save(sayUrl(w));
       onProgress(++done, list.length);
     }
   }
@@ -151,5 +175,5 @@ export async function downloadAllAudio(words: Word[], onProgress: (done: number,
 export async function cachedAudioCount() {
   if (typeof caches === "undefined") return 0;
   const cache = await caches.open(AUDIO_CACHE);
-  return (await cache.keys()).length;
+  return (await cache.keys()).filter((r) => !r.url.includes("/audio/say/")).length;
 }

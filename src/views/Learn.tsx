@@ -5,7 +5,7 @@ import { playStory, stopStory, toggleStory } from "../lib/audio";
 import { useApp } from "../lib/context";
 import { useT } from "../lib/i18n";
 import { celebrate, sfx } from "../lib/fx";
-import { go } from "../lib/router";
+import { go, goBack } from "../lib/router";
 import { getProgress, grade, Rating, useProgress, type Grade } from "../lib/store";
 
 /**
@@ -89,7 +89,7 @@ export function Learn({ group }: { group: number }) {
             <button className="btn primary" onClick={() => go(`/quiz/ids/${ids.join(",")}`)}>
               <Icon name="target" /> {t("Practice these words")}
             </button>
-            <button className="btn" onClick={() => go(`/group/${group}`)}>
+            <button className="btn" onClick={() => goBack(`/group/${group}`)}>
               {t("Back to the set")}
             </button>
           </div>
@@ -101,7 +101,7 @@ export function Learn({ group }: { group: number }) {
   return (
     <div className="page learn">
       <div className="session-head">
-        <button className="icon-btn" onClick={() => go(`/group/${group}`)} aria-label="Leave session">
+        <button className="icon-btn" onClick={() => goBack(`/group/${group}`)} aria-label="Leave session">
           <Icon name="close" />
         </button>
         <div className="progress-track" aria-label={`Word ${i + 1} of ${session.list.length}`}>

@@ -1,8 +1,10 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { useBackToClose } from "../lib/back";
 import { Icon } from "./Icon";
 
 export function Modal({ onClose, children, label }: { onClose: () => void; children: ReactNode; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  useBackToClose(onClose);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     addEventListener("keydown", onKey);

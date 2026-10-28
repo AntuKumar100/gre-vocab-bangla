@@ -31,6 +31,7 @@ for (const file of readdirSync(setsDir).filter((f) => f.endsWith(".json")).sort(
       example: w.example ?? "",
       ...(w.gre && { gre: w.gre }),
       audio: existsSync(join(root, "public/audio", `${id}.mp3`)),
+      say: existsSync(join(root, "public/audio/say", `${id}.mp3`)),
     });
   }
 }

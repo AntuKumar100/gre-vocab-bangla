@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useBackToClose } from "../lib/back";
 import { celebrate, sfx } from "../lib/fx";
 import { useT } from "../lib/i18n";
 import { levelTitle, onXp } from "../lib/store";
@@ -14,6 +15,8 @@ export function GameLayer({ routeKey }: { routeKey: string }) {
   const [floats, setFloats] = useState<Float[]>([]);
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const t = useT();
+  const closeLevelUp = useCallback(() => setLevelUp(null), []);
+  useBackToClose(closeLevelUp, levelUp !== null);
 
   useEffect(
     () =>

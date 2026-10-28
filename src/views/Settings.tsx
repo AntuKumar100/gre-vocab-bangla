@@ -6,7 +6,7 @@ import { isNative, saveBackup, setDailyReminder } from "../lib/native";
 import { go } from "../lib/router";
 import { cachedAudioCount, downloadAllAudio } from "../lib/audio";
 import { useApp } from "../lib/context";
-import { exportProgress, importProgress, resetProgress, today, updateSettings, useProgress, type Theme } from "../lib/store";
+import { exportProgress, importProgress, resetProgress, today, updateSettings, useProgress, type TextSize, type Theme } from "../lib/store";
 
 export function Settings() {
   const { index } = useApp();
@@ -112,13 +112,30 @@ export function Settings() {
             onChange={(e) => updateSettings({ audioRate: Number(e.target.value) })}
           />
         </label>
+      </section>
+
+      <section className="panel">
+        <h2>{t("Look and feel")}</h2>
         <label className="field row">
-          <span>Theme</span>
+          <span>{t("Theme")}</span>
           <select value={settings.theme} onChange={(e) => updateSettings({ theme: e.target.value as Theme })}>
-            <option value="system">Match device</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
+            <option value="light">{t("Light")}</option>
+            <option value="dark">{t("Dark")}</option>
+            <option value="night">{t("Night")}</option>
+            <option value="system">{t("Match phone")}</option>
           </select>
+        </label>
+        <label className="field row">
+          <span>{t("Text size")}</span>
+          <select value={settings.textSize} onChange={(e) => updateSettings({ textSize: e.target.value as TextSize })}>
+            <option value="normal">{t("Normal")}</option>
+            <option value="large">{t("Large")}</option>
+            <option value="larger">{t("Larger")}</option>
+          </select>
+        </label>
+        <label className="field row check">
+          <input type="checkbox" checked={settings.haptics} onChange={(e) => updateSettings({ haptics: e.target.checked })} />
+          <span>{t("Vibrate for right and wrong answers")}</span>
         </label>
       </section>
 

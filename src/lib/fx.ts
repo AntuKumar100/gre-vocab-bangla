@@ -1,4 +1,5 @@
 import confetti from "canvas-confetti";
+import { buzz } from "./native";
 import { getProgress } from "./store";
 
 // Small game-feel layer: synthesized sound effects and confetti bursts.
@@ -47,7 +48,9 @@ const SOUNDS = {
 export type Sound = keyof typeof SOUNDS;
 
 export function sfx(name: Sound) {
-  if (!getProgress().settings.sounds) return;
+  const { sounds, haptics } = getProgress().settings;
+  if (haptics && (name === "correct" || name === "combo" || name === "wrong")) buzz(name !== "wrong");
+  if (!sounds) return;
   const a = audio();
   if (a) SOUNDS[name](a);
 }

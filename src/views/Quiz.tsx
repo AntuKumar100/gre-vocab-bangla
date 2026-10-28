@@ -329,7 +329,7 @@ function QuizRun({
       setMissed((m) => [...m, q.w]);
       replay(cardRef.current, "shake");
     }
-    if (q.type !== "spell") speak(q.w.word);
+    if (q.type !== "spell") speak(q.w);
   };
 
   // Countdown for timed mode; running out counts as a miss.

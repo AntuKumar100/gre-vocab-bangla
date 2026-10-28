@@ -29,6 +29,10 @@ export function audioUrl(w: Word) {
   return `${import.meta.env.BASE_URL}audio/${w.id}.mp3`;
 }
 
+export function sayUrl(w: Word) {
+  return `${import.meta.env.BASE_URL}audio/say/${w.id}.mp3`;
+}
+
 export interface WordIndex {
   words: Word[];
   byId: Map<string, Word>;

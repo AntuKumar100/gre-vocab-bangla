@@ -49,3 +49,48 @@ export async function saveBackup(json: string, fileName: string) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+/** Listen for the phone's Back button (Android app only). Returns a function that stops listening. */
+export function onBackButton(handler: () => void): () => void {
+  if (!isNative) return () => {};
+  let stop: (() => void) | null = null;
+  let cancelled = false;
+  void import("@capacitor/app")
+    .then(({ App }) => App.addListener("backButton", handler))
+    .then((h) => {
+      if (cancelled) void h.remove();
+      else stop = () => void h.remove();
+    });
+  return () => {
+    cancelled = true;
+    stop?.();
+  };
+}
+
+export async function exitApp() {
+  const { App } = await import("@capacitor/app");
+  await App.exitApp();
+}
+
+/** Match the status bar icons to the app's theme: light icons on a dark theme. `null` follows the phone. */
+export async function setStatusBarDark(dark: boolean | null) {
+  if (!isNative) return;
+  const { SystemBars, SystemBarsStyle } = await import("@capacitor/core");
+  // Older Android web views sit below the status bar instead of behind it; the bar
+  // then shows the phone's own light or dark background, so follow the phone.
+  const inset = getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-top").trim();
+  if (inset === "0px") dark = null;
+  const style = dark === null ? SystemBarsStyle.Default : dark ? SystemBarsStyle.Dark : SystemBarsStyle.Light;
+  await SystemBars.setStyle({ style });
+}
+
+/** A short vibration for a right or wrong answer. */
+export function buzz(ok: boolean) {
+  if (isNative) {
+    void import("@capacitor/haptics").then(({ Haptics, NotificationType }) =>
+      Haptics.notification({ type: ok ? NotificationType.Success : NotificationType.Error }),
+    );
+  } else if ("vibrate" in navigator) {
+    navigator.vibrate(ok ? 25 : [40, 60, 40]);
+  }
+}

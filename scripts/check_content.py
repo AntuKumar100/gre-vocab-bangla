@@ -29,8 +29,11 @@ for path in sorted((ROOT / "content" / "sets").glob("*.json")):
         if story.count("...") != 1 or not tags <= {"laugh", "chuckle", "sigh", "gasp"}:
             problems += 1
             print(f"{where}: story needs one self-test pause and only known expression tags")
-        audio = ROOT / "public" / "audio" / (re.sub(r"[^a-z0-9]+", "-", e["word"].lower()).strip("-") + ".mp3")
-        if not audio.exists():
+        name = re.sub(r"[^a-z0-9]+", "-", e["word"].lower()).strip("-") + ".mp3"
+        if not (ROOT / "public" / "audio" / name).exists():
             problems += 1
             print(f"{where}: no audio file")
+        if not (ROOT / "public" / "audio" / "say" / name).exists():
+            problems += 1
+            print(f"{where}: no pronunciation file (run scripts/gen_words.py)")
 print(f"{count} words checked, {problems} problems")

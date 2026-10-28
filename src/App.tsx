@@ -1,15 +1,20 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { createElement, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GameLayer } from "./components/GameLayer";
 import { Icon, type IconName } from "./components/Icon";
 import { LogoMark, Wordmark } from "./components/Logo";
 import { Modal } from "./components/Modal";
+import { ThemeMenu } from "./components/ThemeMenu";
+import { Toaster } from "./components/Toast";
 import { WordDetail } from "./components/WordDetail";
 import { stopStory } from "./lib/audio";
+import { closeTopPopup } from "./lib/back";
+import { toast } from "./lib/toast";
 import { Ctx, type AppCtx } from "./lib/context";
 import { useWords } from "./lib/data";
 import { useT } from "./lib/i18n";
-import { go, useRoute } from "./lib/router";
+import { exitApp, onBackButton, setStatusBarDark } from "./lib/native";
+import { backButton, go, useRoute } from "./lib/router";
 import { dueIds, levelOf, streak, useProgress } from "./lib/store";
 import { Dashboard } from "./views/Dashboard";
 import { GroupView } from "./views/GroupView";
@@ -18,13 +23,27 @@ import { Learn } from "./views/Learn";
 import { Review } from "./views/Review";
 
 // Screens visited less often load on demand, so the first screen appears sooner.
-const Quiz = lazy(() => import("./views/Quiz").then((m) => ({ default: m.Quiz })));
-const SynonymMap = lazy(() => import("./views/SynonymMap").then((m) => ({ default: m.SynonymMap })));
-const Words = lazy(() => import("./views/Words").then((m) => ({ default: m.Words })));
-const Settings = lazy(() => import("./views/Settings").then((m) => ({ default: m.Settings })));
-const About = lazy(() => import("./views/About").then((m) => ({ default: m.About })));
-const Privacy = lazy(() => import("./views/About").then((m) => ({ default: m.Privacy })));
-const Onboarding = lazy(() => import("./views/Onboarding").then((m) => ({ default: m.Onboarding })));
+// Once the app is idle they all load in the background, so later page changes
+// slide straight to the new screen instead of a loading spinner.
+function view<P extends object>(load: () => Promise<ComponentType<P>>) {
+  let loaded: ComponentType<P> | null = null;
+  const preload = () => load().then((c) => (loaded = c));
+  const Lazy = lazy(() => preload().then((c) => ({ default: c })));
+  // Each mount keeps the component it started with, so finishing the preload never remounts an open screen.
+  const View = (props: P) => {
+    const [C] = useState(() => (loaded ?? Lazy) as ComponentType<P>);
+    return createElement(C, props);
+  };
+  return Object.assign(View, { preload });
+}
+const Quiz = view(() => import("./views/Quiz").then((m) => m.Quiz));
+const SynonymMap = view(() => import("./views/SynonymMap").then((m) => m.SynonymMap));
+const Words = view(() => import("./views/Words").then((m) => m.Words));
+const Settings = view(() => import("./views/Settings").then((m) => m.Settings));
+const About = view(() => import("./views/About").then((m) => m.About));
+const Privacy = view(() => import("./views/About").then((m) => m.Privacy));
+const Onboarding = view(() => import("./views/Onboarding").then((m) => m.Onboarding));
+const LATER = [Quiz, SynonymMap, Words, Settings, About, Privacy];
 
 const NAV: { path: string; label: string; icon: IconName; match: string[] }[] = [
   { path: "/", label: "Home", icon: "home", match: [""] },
@@ -34,14 +53,32 @@ const NAV: { path: string; label: string; icon: IconName; match: string[] }[] = 
   { path: "/words", label: "Words", icon: "search", match: ["words"] },
 ];
 
+const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+
 function useTheme() {
-  const { settings } = useProgress();
+  const { theme, lang, textSize } = useProgress().settings;
+  const [systemDark, setSystemDark] = useState(darkQuery.matches);
+  useEffect(() => {
+    const onChange = () => setSystemDark(darkQuery.matches);
+    darkQuery.addEventListener("change", onChange);
+    return () => darkQuery.removeEventListener("change", onChange);
+  }, []);
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.theme === "system") root.removeAttribute("data-theme");
-    else root.setAttribute("data-theme", settings.theme);
-    root.lang = settings.lang;
-  }, [settings.theme, settings.lang]);
+    if (theme === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    if (textSize === "normal") root.removeAttribute("data-text");
+    else root.setAttribute("data-text", textSize);
+    root.lang = lang;
+    // The browser bar and the phone's status bar take the header's colour.
+    const surface = getComputedStyle(root).getPropertyValue("--surface").trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", surface);
+    const bar = () => void setStatusBarDark(theme === "system" ? null : theme !== "light").catch(() => {});
+    bar();
+    // The app reports the status bar's size a moment after starting; check again once it has.
+    const id = setTimeout(bar, 1000);
+    return () => clearTimeout(id);
+  }, [theme, lang, textSize, systemDark]);
 }
 
 const spinner = (
@@ -59,6 +96,7 @@ export default function App() {
   useTheme();
 
   const openWord = useCallback((id: string) => setOpenId(id), []);
+  const closeWord = useCallback(() => setOpenId(null), []);
   const ctx = useMemo<AppCtx | null>(() => {
     if (!index) return null;
     const byWord = new Map<string, string[]>();
@@ -67,8 +105,34 @@ export default function App() {
   }, [index, openWord]);
 
   const routeKey = route.join("/");
-  // Leaving a screen stops its story.
-  useEffect(() => () => stopStory(), [routeKey]);
+  // Leaving a screen stops its story and closes any open word card.
+  useEffect(
+    () => () => {
+      stopStory();
+      setOpenId(null);
+    },
+    [routeKey],
+  );
+
+  useEffect(() => {
+    if (!ctx) return;
+    const id = setTimeout(() => LATER.forEach((v) => void v.preload()), 1500);
+    return () => clearTimeout(id);
+  }, [ctx]);
+
+  // The phone's Back button closes a popup, then steps back, then (twice on Home) exits.
+  useEffect(() => {
+    let armed = 0;
+    return onBackButton(() => {
+      if (closeTopPopup() || backButton()) return;
+      if (Date.now() - armed < 2000) void exitApp();
+      else {
+        armed = Date.now();
+        toast(t("Press back again to exit"));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.settings.lang]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const due = useMemo(() => dueIds().length, [progress.cards, routeKey]);
@@ -84,6 +148,7 @@ export default function App() {
             <Onboarding />
           </Suspense>
         </ErrorBoundary>
+        <Toaster />
       </Ctx.Provider>
     );
 
@@ -172,6 +237,7 @@ export default function App() {
             </span>
           </span>
         </div>
+        <ThemeMenu />
         <a href="#/settings" className={`icon-btn${head === "settings" || head === "about" ? " on" : ""}`} aria-label={t("Settings")}>
           <Icon name="settings" />
         </a>
@@ -199,8 +265,9 @@ export default function App() {
         ))}
       </nav>
       <GameLayer routeKey={routeKey} />
+      <Toaster />
       {openW && (
-        <Modal onClose={() => setOpenId(null)} label={openW.word}>
+        <Modal onClose={closeWord} label={openW.word}>
           <WordDetail w={openW} key={openW.id} />
         </Modal>
       )}

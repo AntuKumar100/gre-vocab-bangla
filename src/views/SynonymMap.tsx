@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTooltip } from "../charts/Tooltip";
 import { Icon } from "../components/Icon";
 import { useApp } from "../lib/context";
-import { go } from "../lib/router";
+import { go, goBack } from "../lib/router";
 import { stageOf, useProgress } from "../lib/store";
 import { STAGES, STAGE_LABEL, type Word } from "../lib/types";
 
@@ -137,12 +137,12 @@ export function SynonymMap({ group }: { group: number }) {
   return (
     <div className="page map-page">
       <div className="page-head">
-        <button className="icon-btn" onClick={() => go(`/group/${group}`)} aria-label="Back to group">
+        <button className="icon-btn" onClick={() => goBack(`/group/${group}`)} aria-label="Back to group">
           <Icon name="arrowLeft" />
         </button>
         <h1>Synonym map</h1>
         <div className="spacer" />
-        <select value={group} onChange={(e) => go(`/map/${e.target.value}`)} aria-label="Group">
+        <select value={group} onChange={(e) => go(`/map/${e.target.value}`, { replace: true, dir: "tab" })} aria-label="Group">
           {index.groups.map((g) => (
             <option key={g} value={g}>
               Group {g}

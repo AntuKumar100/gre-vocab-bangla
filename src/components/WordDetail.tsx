@@ -5,7 +5,7 @@ import { useT } from "../lib/i18n";
 import { stageOf, toggleStar, useProgress } from "../lib/store";
 import { STAGE_LABEL, type Word } from "../lib/types";
 import { Icon } from "./Icon";
-import { Highlighted, StoryPlayer } from "./Story";
+import { Highlighted, StoryPlayer, StoryText } from "./Story";
 
 export function WordHeader({ w, big = false }: { w: Word; big?: boolean }) {
   const { cards, starred } = useProgress();
@@ -23,7 +23,7 @@ export function WordHeader({ w, big = false }: { w: Word; big?: boolean }) {
         </div>
       </div>
       <div className="head-actions">
-        <button className="icon-btn" onClick={() => speak(w.word)} aria-label={`Pronounce ${w.word}`} title="Pronounce">
+        <button className="icon-btn" onClick={() => speak(w)} aria-label={`Pronounce ${w.word}`} title="Pronounce">
           <Icon name="speaker" />
         </button>
         <button
@@ -76,7 +76,7 @@ export function WordBody({ w }: { w: Word }) {
           <StoryPlayer w={w} />
         </div>
         <p>
-          <Highlighted text={w.story} word={w.word} />
+          <StoryText w={w} key={w.id} />
         </p>
       </section>
       {w.synonyms.length > 0 && (

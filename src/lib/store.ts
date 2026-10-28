@@ -5,7 +5,8 @@ import type { Stage } from "./types";
 const KEY = "gre-vocab-progress-v1";
 const MASTERED_DAYS = 21;
 
-export type Theme = "system" | "light" | "dark";
+export type Theme = "system" | "light" | "dark" | "night";
+export type TextSize = "normal" | "large" | "larger";
 
 export interface Settings {
   theme: Theme;
@@ -20,6 +21,10 @@ export interface Settings {
   sounds: boolean;
   /** Confetti and other celebration animations. */
   effects: boolean;
+  /** A short vibration for right and wrong answers (phones only). */
+  haptics: boolean;
+  /** Reading size for the whole interface. */
+  textSize: TextSize;
   /** Daily XP goal shown as the ring on Home. */
   xpGoal: number;
   /** Interface language; word content is always English with Bangla meanings. */
@@ -66,6 +71,8 @@ const DEFAULT_SETTINGS: Settings = {
   newPerDay: 20,
   sounds: true,
   effects: true,
+  haptics: true,
+  textSize: "normal",
   xpGoal: 150,
   lang: "en",
   onboarded: false,

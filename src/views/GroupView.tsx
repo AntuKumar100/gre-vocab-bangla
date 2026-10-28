@@ -5,7 +5,7 @@ import { rowProps } from "../lib/a11y";
 import { playAll, stopStory, usePlayerState } from "../lib/audio";
 import { useApp } from "../lib/context";
 import { useT } from "../lib/i18n";
-import { go } from "../lib/router";
+import { go, goBack } from "../lib/router";
 import { stageOf, useProgress } from "../lib/store";
 import { STAGE_LABEL } from "../lib/types";
 
@@ -25,7 +25,7 @@ export function GroupView({ group }: { group: number }) {
   return (
     <div className="page">
       <div className="page-head">
-        <button className="icon-btn" onClick={() => go("/groups")} aria-label={t("Sets")}>
+        <button className="icon-btn" onClick={() => goBack("/groups")} aria-label={t("Sets")}>
           <Icon name="arrowLeft" />
         </button>
         <h1>
@@ -33,12 +33,12 @@ export function GroupView({ group }: { group: number }) {
         </h1>
         <div className="spacer" />
         {prev !== undefined && (
-          <button className="btn ghost" onClick={() => go(`/group/${prev}`)}>
+          <button className="btn ghost" onClick={() => go(`/group/${prev}`, { replace: true, dir: "back" })}>
             ‹ {prev}
           </button>
         )}
         {next !== undefined && (
-          <button className="btn ghost" onClick={() => go(`/group/${next}`)}>
+          <button className="btn ghost" onClick={() => go(`/group/${next}`, { replace: true, dir: "forward" })}>
             {next} ›
           </button>
         )}

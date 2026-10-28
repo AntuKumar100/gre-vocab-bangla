@@ -5,7 +5,7 @@ import { playStory, speak, stopStory, toggleStory } from "../lib/audio";
 import { useApp } from "../lib/context";
 import { useT } from "../lib/i18n";
 import { celebrate, sfx } from "../lib/fx";
-import { go } from "../lib/router";
+import { go, goBack } from "../lib/router";
 import { dueIds, getProgress, grade, previewIntervals, Rating, useProgress, type Grade } from "../lib/store";
 
 const RATINGS: { r: Grade; label: string; cls: string }[] = [
@@ -26,7 +26,7 @@ export function Review() {
   const w = queue.length ? index.byId.get(queue[0]) : undefined;
 
   useEffect(() => {
-    if (w && !settings.reverse) speak(w.word);
+    if (w && !settings.reverse) speak(w);
     return () => stopStory();
   }, [w, settings.reverse]);
 
@@ -103,7 +103,7 @@ export function Review() {
   return (
     <div className="page review">
       <div className="session-head">
-        <button className="icon-btn" onClick={() => go("/")} aria-label="Leave review">
+        <button className="icon-btn" onClick={() => goBack("/")} aria-label="Leave review">
           <Icon name="close" />
         </button>
         <div className="progress-track">

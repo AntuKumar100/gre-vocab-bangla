@@ -10,6 +10,8 @@ export interface Word {
   synonyms: string[];
   example: string;
   audio: boolean;
+  /** A recorded pronunciation of the headword exists. */
+  say: boolean;
   /** GRE sentence item: blank sentence, synonym pair, tempting wrong answer, clue phrase. */
   gre?: GreItem;
 }
