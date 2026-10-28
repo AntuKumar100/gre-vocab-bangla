@@ -1,8 +1,9 @@
 name: Android app
 
 # Builds the Android app from the website build. Every run publishes an installable
-# APK to the "android-latest" release; with signing secrets set it also builds the
-# signed App Bundle (.aab) for Google Play.
+# APK and the App Bundle (.aab) for Google Play to the "android-latest" release.
+# With signing secrets set the bundle is signed; otherwise it is published unsigned,
+# to be signed with jarsigner before upload (see store/ANDROID.md).
 on:
   push:
     branches: [main]
@@ -56,18 +57,18 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
-          if [ -n "$ANDROID_KEYSTORE_PATH" ]; then ./gradlew --no-daemon bundleRelease; fi
+          ./gradlew --no-daemon assembleDebug bundleRelease
           mkdir -p ../out
           cp app/build/outputs/apk/debug/app-debug.apk ../out/shobdo-quest.apk
-          if [ -f app/build/outputs/bundle/release/app-release.aab ]; then cp app/build/outputs/bundle/release/app-release.aab ../out/shobdo-quest.aab; fi
+          if [ -n "$ANDROID_KEYSTORE_PATH" ]; then name=shobdo-quest.aab; else name=shobdo-quest-unsigned.aab; fi
+          cp app/build/outputs/bundle/release/app-release.aab "../out/$name"
           ls -la ../out
       - uses: actions/upload-artifact@v4
         with:
           name: android-${{ github.run_number }}
           path: out/
           retention-days: 14
-      - name: Publish the APK for direct install
+      - name: Publish the APK and the App Bundle
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
@@ -76,5 +77,8 @@ jobs:
           make_latest: false
           body: |
             Install on an Android phone: download shobdo-quest.apk below, open it, and allow installs from this source when Android asks.
+            The .aab file is the App Bundle for Google Play.
             Built from ${{ github.sha }} (build ${{ github.run_number }}).
-          files: out/shobdo-quest.apk
+          files: |
+            out/shobdo-quest.apk
+            out/*.aab
