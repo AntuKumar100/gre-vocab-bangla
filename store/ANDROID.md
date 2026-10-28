@@ -30,8 +30,15 @@ and a backup drive). Never put this file in the repository. Then add four secret
 | `ANDROID_KEY_ALIAS` | `upload` |
 | `ANDROID_KEY_PASSWORD` | the key password (same as the keystore password unless you chose another) |
 
-From the next push on, the workflow also builds `shobdo-quest.aab`, the signed App Bundle Google Play wants.
-Download it from the workflow run's artifacts (Actions → Android app → latest run → Artifacts).
+From the next push on, the workflow builds `shobdo-quest.aab`, the signed App Bundle Google Play wants,
+and attaches it to the `android-latest` release next to the APK.
+
+Without the secrets, the release has `shobdo-quest-unsigned.aab` instead. Sign it yourself before
+uploading (the JDK's `jarsigner` asks for the keystore password):
+
+```
+jarsigner -keystore shobdo-upload.jks -sigalg SHA256withRSA -digestalg SHA-256 -signedjar shobdo-quest.aab shobdo-quest-unsigned.aab upload
+```
 
 ## Publish on Google Play
 
