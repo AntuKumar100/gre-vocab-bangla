@@ -20,7 +20,7 @@ Learn the vocabulary of the GRE® General Test the way your memory likes it: in 
 Shobdo Quest teaches 1,110 high-value GRE words. Every word comes with:
 • a clear English meaning and a Bangla meaning (বাংলা অর্থ)
 • a memory trick that makes it stick
-• a short story set in everyday Bangladeshi life, narrated with real expression, ending in a quick self-test
+• a short everyday story that shows the meaning, narrated with real expression, ending in a quick self-test
 • a recorded pronunciation
 • synonyms and an example sentence
 • a real GRE-style question

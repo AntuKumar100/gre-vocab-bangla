@@ -5,7 +5,7 @@ Every word has:
 
 - a clear **English meaning** and a **Bangla meaning (বাংলা অর্থ)**
 - a **memory hook**: a sound-alike or word-root trick
-- a short **story** (70–100 words) set in Bangladeshi life, ending with a self-test question
+- a short **story** (70–100 words) from everyday life, ending with a self-test question
 - **narrated audio of the story** in an expressive voice that laughs, sighs and gasps where the scene calls for it
 - a recorded **pronunciation** of the word
 - a **GRE-style sentence** with a blank, a synonym pair, a trap answer and the clue phrase
